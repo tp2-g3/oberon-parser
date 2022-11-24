@@ -1,7 +1,8 @@
 package oberonParser
 
-import cats.parse.Rfc5234.{sp, alpha, digit}
+import cats.parse.Rfc5234.{sp, alpha, digit, char}
 import cats.parse.{Parser, Parser0}
+import cats.data.NonEmptyList
 
 sealed trait AddOperator
 case object PlusOperator extends AddOperator
@@ -16,6 +17,17 @@ case object ModOperator extends MulOperator
 case object AndOperator extends MulOperator
 
 final case class Identifier(name: String)
+
+sealed trait HexDigit
+final case class LetterDigit(letter: Char) extends HexDigit
+final case class NumberDigit(number: Int) extends HexDigit
+
+sealed trait ScaleFactorSign
+case object ScalePlus extends ScaleFactorSign
+case object ScaleMinus extends ScaleFactorSign
+case object ScaleNone extends ScaleFactorSign
+
+final case class ScaleFactor(sign: ScaleFactorSign, num:Int)
 
 val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
 val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
@@ -32,3 +44,11 @@ Parser.char('&').map(x => AndOperator)
 val identifierP: Parser[Identifier] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
 map(s => Identifier(s.toString))
 
+val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
+digit.map(x => NumberDigit(x.asDigit))
+
+def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.toString.toInt
+
+val scaleFactorP: Parser[ScaleFactor] = (Parser.char('E') *> 
+(Parser.char('+').map(x => ScalePlus) | Parser.char('-').map(x => ScaleMinus) |
+Parser.pure(ScaleNone)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
