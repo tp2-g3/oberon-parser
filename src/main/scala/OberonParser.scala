@@ -28,7 +28,9 @@ case object ScaleMinus extends ScaleFactorSign
 
 final case class ScaleFactor(sign: Option[ScaleFactorSign], number:Int)
 
-final case class Real(number: Double, scale: Option[ScaleFactor])
+sealed trait Number
+final case class RealNumber(number: Double, scale: Option[ScaleFactor]) extends Number
+final case class IntegerNumber(number: Int) extends Number
 
 object OberonParser {
 	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
@@ -66,7 +68,26 @@ object OberonParser {
 		powers.foldLeft(0: Double)((acc, x) => acc + x)
 	}
 
-	def realP: Parser[Real] = realHelperP.map{ case ((intPart, l), scale) => 
-		Real(intPart + decimalPartOfList(l), scale)
+	private def realP: Parser[RealNumber] = realHelperP.map{ case ((intPart, l), scale) => 
+		RealNumber(intPart + decimalPartOfList(l), scale)
 	}
+
+	private def decIntegerP: Parser[IntegerNumber] = digit.rep
+	.map(nonEmptyListToInt.apply)
+	.map(IntegerNumber.apply)
+
+	private def hexIntegerP: Parser[IntegerNumber] = {
+		def hexListToString(l: NonEmptyList[HexDigit]): String = l.toList.foldLeft("") {
+			(acc: String, x: HexDigit) => x match {
+				case LetterDigit(x) => acc + x.toString
+				case NumberDigit(x) => acc + x.toString
+			}
+		}
+
+		(digit ~ hexDigitP.rep <* Parser.char('H'))
+		.map((x, l) => Integer.parseInt(hexListToString(NumberDigit(x)::l), 16))
+		.map(IntegerNumber.apply)
+	}
+
+	def integerP: Parser[IntegerNumber] = hexIntegerP | decIntegerP
 }
