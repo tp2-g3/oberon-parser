@@ -1,5 +1,5 @@
 import oberonParser._
 
 @main def hello: Unit = {
-	println(scaleFactorP.parse("E+1234"))
+	println(OberonParser.realP.parse("123.789E+1234"))
 }

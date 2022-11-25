@@ -30,29 +30,43 @@ final case class ScaleFactor(sign: Option[ScaleFactorSign], number:Int)
 
 final case class Real(number: Double, scale: Option[ScaleFactor])
 
-val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
-val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
+object OberonParser {
+	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
+	private val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
 
-val addOperatorP: Parser[AddOperator] = 
-Parser.char('+').map(x => PlusOperator) | Parser.char('-').map(x => MinusOperator) |
-Parser.string("OR").map(x => OrOperator)
+	private val addOperatorP: Parser[AddOperator] = 
+	Parser.char('+').map(x => PlusOperator) | Parser.char('-').map(x => MinusOperator) |
+	Parser.string("OR").map(x => OrOperator)
 
-val mulOperatorP: Parser[MulOperator] = 
-Parser.char('*').map(x => TimesOperator) | Parser.char('/').map(x => SlashOperator) |
-Parser.string("DIV").map(x => DivOperator) | Parser.string("MOD").map(x => ModOperator) |
-Parser.char('&').map(x => AndOperator)
+	private val mulOperatorP: Parser[MulOperator] = 
+	Parser.char('*').map(x => TimesOperator) | Parser.char('/').map(x => SlashOperator) |
+	Parser.string("DIV").map(x => DivOperator) | Parser.string("MOD").map(x => ModOperator) |
+	Parser.char('&').map(x => AndOperator)
 
-val identifierP: Parser[Identifier] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
-map(s => Identifier(s.toString))
+	private val identifierP: Parser[Identifier] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
+	map(s => Identifier(s.toString))
 
-val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
-digit.map(x => NumberDigit(x.asDigit))
+	private val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
+	digit.map(x => NumberDigit(x.asDigit))
 
-def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
+	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
-val scaleFactorP: Parser[ScaleFactor] = (Parser.char('E') *> 
-(Parser.char('+').map(x => Some(ScalePlus)) | Parser.char('-').map(x => Some(ScaleMinus)) |
-Parser.pure(None)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
+	private val scaleFactorP: Parser[ScaleFactor] = (Parser.char('E') *> 
+	(Parser.char('+').map(x => Some(ScalePlus)) | Parser.char('-').map(x => Some(ScaleMinus)) |
+	Parser.pure(None)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
 
-val realP = (digit.rep.map(nonEmptyListToInt) <* Parser.char('.')).map(x => x.toDouble) ~
-digit.rep0 ~ scaleFactorP
+	private val realHelperP: Parser[((Double, List[Char]), Option[ScaleFactor])] =
+	(digit.rep.map(nonEmptyListToInt) <* Parser.char('.')).map(x => x.toDouble) ~
+	digit.rep0 ~ (scaleFactorP.map(Some.apply) | Parser.pure(None))
+
+	private def decimalPartOfList(l: List[Char]): Double = {
+		val powers = for {
+			i <- 1 to l.length
+		} yield l(i-1).asDigit.toDouble * scala.math.pow(10, -i)
+		powers.foldLeft(0: Double)((acc, x) => acc + x)
+	}
+
+	def realP: Parser[Real] = realHelperP.map{ case ((intPart, l), scale) => 
+		Real(intPart + decimalPartOfList(l), scale)
+	}
+}
