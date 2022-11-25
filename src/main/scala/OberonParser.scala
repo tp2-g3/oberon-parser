@@ -25,9 +25,10 @@ final case class NumberDigit(number: Int) extends HexDigit
 sealed trait ScaleFactorSign
 case object ScalePlus extends ScaleFactorSign
 case object ScaleMinus extends ScaleFactorSign
-case object ScaleNone extends ScaleFactorSign
 
-final case class ScaleFactor(sign: ScaleFactorSign, num:Int)
+final case class ScaleFactor(sign: Option[ScaleFactorSign], number:Int)
+
+final case class Real(number: Double, scale: Option[ScaleFactor])
 
 val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
 val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
@@ -47,8 +48,11 @@ map(s => Identifier(s.toString))
 val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
 digit.map(x => NumberDigit(x.asDigit))
 
-def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.toString.toInt
+def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
 val scaleFactorP: Parser[ScaleFactor] = (Parser.char('E') *> 
-(Parser.char('+').map(x => ScalePlus) | Parser.char('-').map(x => ScaleMinus) |
-Parser.pure(ScaleNone)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
+(Parser.char('+').map(x => Some(ScalePlus)) | Parser.char('-').map(x => Some(ScaleMinus)) |
+Parser.pure(None)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
+
+val realP = (digit.rep.map(nonEmptyListToInt) <* Parser.char('.')).map(x => x.toDouble) ~
+digit.rep0 ~ scaleFactorP
