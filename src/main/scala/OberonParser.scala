@@ -3,6 +3,7 @@ package oberonParser
 import cats.parse.Rfc5234.{sp, alpha, digit, char}
 import cats.parse.{Parser, Parser0}
 import cats.data.NonEmptyList
+import oberonAST.OberonModule
 
 sealed trait AddOperator
 case object PlusOperator extends AddOperator
@@ -15,8 +16,6 @@ case object SlashOperator extends MulOperator
 case object DivOperator extends MulOperator
 case object ModOperator extends MulOperator
 case object AndOperator extends MulOperator
-
-final case class Identifier(name: String)
 
 sealed trait HexDigit
 final case class LetterDigit(letter: Char) extends HexDigit
@@ -47,8 +46,8 @@ object OberonParser {
 	Parser.string("DIV").map(x => DivOperator) | Parser.string("MOD").map(x => ModOperator) |
 	Parser.char('&').map(x => AndOperator)
 
-	private val identifierP: Parser[Identifier] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
-	map(s => Identifier(s.toString))
+	private val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
+	map(s => s.toString)
 
 	private val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
 	digit.map(NumberDigit.apply)
@@ -70,7 +69,7 @@ object OberonParser {
 		powers.foldLeft(0: Double)((acc, x) => acc + x)
 	}
 
-	private def realP: Parser[RealValue] = realHelperP.map{ case ((intPart, l), scale) => 
+	private def realWithScaleP: Parser[RealValue] = realHelperP.map{ case ((intPart, l), scale) => 
 		RealValue(intPart + decimalPartOfList(l), scale)
 	}
 
@@ -91,9 +90,9 @@ object OberonParser {
 		.map((x, l) => Integer.parseInt(hexListToString(NumberDigit(x)::l), 16))
 		.map(IntegerNumber.apply)
 
-	private def integerP: Parser[IntegerNumber] = hexIntegerP.backtrack | decIntegerP
+	private def integerWithHexP: Parser[IntegerNumber] = hexIntegerP.backtrack | decIntegerP
 
-	private def numberP: Parser[Number] = realP.backtrack | integerP
+	private def numberWithScaleHexP: Parser[Number] = realWithScaleP.backtrack | integerWithHexP
 
 	private def quoteStringP: Parser[String] = 
 		Parser.charsWhile(x => x != '"').surroundedBy(Parser.char('"'))

@@ -34,8 +34,7 @@ case class Procedure(name: String,
 }
 
 /* formal argument definition */
-trait FormalArg{
-
+trait FormalArg {
   def argumentType: Type
   def name: String
 }
