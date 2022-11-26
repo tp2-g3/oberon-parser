@@ -77,19 +77,29 @@ object OberonParser {
 	.map(nonEmptyListToInt.apply)
 	.map(IntegerNumber.apply)}
 
-	private def hexIntegerP: Parser[IntegerNumber] = {
-		def hexListToString(l: List[HexDigit]): String = l.toList.foldLeft("") {
-			(acc: String, x: HexDigit) => x match {
-				case LetterDigit(x: Char) => acc ++ x.toString
-				case NumberDigit(x: Char) => acc ++ x.toString
-			}
+	private def hexListToString(l: List[HexDigit]): String = l.toList.foldLeft("") {
+		(acc: String, x: HexDigit) => x match {
+			case LetterDigit(x: Char) => acc ++ x.toString
+			case NumberDigit(x: Char) => acc ++ x.toString
 		}
+	}
 
+	private def hexIntegerP: Parser[IntegerNumber] =
 		(digit ~ hexDigitP.rep0 <* Parser.char('H'))
 		.map((x, l) => Integer.parseInt(hexListToString(NumberDigit(x)::l), 16))
 		.map(IntegerNumber.apply)
-	}
 
 	private def integerP: Parser[IntegerNumber] = hexIntegerP.backtrack | decIntegerP
-	def numberP: Parser[Number] = realP.backtrack | integerP
+
+	private def numberP: Parser[Number] = realP.backtrack | integerP
+
+	private def quoteStringP: Parser[String] = 
+		Parser.charsWhile(x => x != '"').surroundedBy(Parser.char('"'))
+
+	private def hexStringP: Parser[String] = 
+		(digit ~ hexDigitP.rep0 <* Parser.char('X'))
+		.map((x, l) => Integer.parseInt(hexListToString(NumberDigit(x)::l), 16))
+		.map(x => x.toChar.toString)
+
+	private def stringP: Parser[String] = quoteStringP.backtrack | hexStringP
 }
