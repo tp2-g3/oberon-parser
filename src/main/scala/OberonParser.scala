@@ -20,7 +20,7 @@ final case class Identifier(name: String)
 
 sealed trait HexDigit
 final case class LetterDigit(letter: Char) extends HexDigit
-final case class NumberDigit(number: Int) extends HexDigit
+final case class NumberDigit(number: Char) extends HexDigit
 
 sealed trait ScaleFactorSign
 case object ScalePlus extends ScaleFactorSign
@@ -49,7 +49,7 @@ object OberonParser {
 	map(s => Identifier(s.toString))
 
 	private val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
-	digit.map(x => NumberDigit(x.asDigit))
+	digit.map(NumberDigit.apply)
 
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
@@ -72,22 +72,24 @@ object OberonParser {
 		RealNumber(intPart + decimalPartOfList(l), scale)
 	}
 
-	private def decIntegerP: Parser[IntegerNumber] = digit.rep
+	private def decIntegerP: Parser[IntegerNumber] = {
+	digit.rep
 	.map(nonEmptyListToInt.apply)
-	.map(IntegerNumber.apply)
+	.map(IntegerNumber.apply)}
 
 	private def hexIntegerP: Parser[IntegerNumber] = {
-		def hexListToString(l: NonEmptyList[HexDigit]): String = l.toList.foldLeft("") {
+		def hexListToString(l: List[HexDigit]): String = l.toList.foldLeft("") {
 			(acc: String, x: HexDigit) => x match {
-				case LetterDigit(x) => acc + x.toString
-				case NumberDigit(x) => acc + x.toString
+				case LetterDigit(x: Char) => acc ++ x.toString
+				case NumberDigit(x: Char) => acc ++ x.toString
 			}
 		}
 
-		(digit ~ hexDigitP.rep <* Parser.char('H'))
+		(digit ~ hexDigitP.rep0 <* Parser.char('H'))
 		.map((x, l) => Integer.parseInt(hexListToString(NumberDigit(x)::l), 16))
 		.map(IntegerNumber.apply)
 	}
 
-	def integerP: Parser[IntegerNumber] = hexIntegerP | decIntegerP
+	private def integerP: Parser[IntegerNumber] = hexIntegerP.backtrack | decIntegerP
+	def numberP: Parser[Number] = realP.backtrack | integerP
 }
