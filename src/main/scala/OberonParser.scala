@@ -28,8 +28,10 @@ case object ScaleMinus extends ScaleFactorSign
 
 final case class ScaleFactor(sign: Option[ScaleFactorSign], number:Int)
 
-sealed trait Number
-final case class RealNumber(number: Double, scale: Option[ScaleFactor]) extends Number
+sealed trait Expression
+sealed abstract class Value extends Expression with Ordered[Value]
+sealed trait Number extends Expression
+final case class RealValue(number: Double, scale: Option[ScaleFactor]) extends Number
 final case class IntegerNumber(number: Int) extends Number
 
 object OberonParser {
@@ -68,8 +70,8 @@ object OberonParser {
 		powers.foldLeft(0: Double)((acc, x) => acc + x)
 	}
 
-	private def realP: Parser[RealNumber] = realHelperP.map{ case ((intPart, l), scale) => 
-		RealNumber(intPart + decimalPartOfList(l), scale)
+	private def realP: Parser[RealValue] = realHelperP.map{ case ((intPart, l), scale) => 
+		RealValue(intPart + decimalPartOfList(l), scale)
 	}
 
 	private def decIntegerP: Parser[IntegerNumber] = {
