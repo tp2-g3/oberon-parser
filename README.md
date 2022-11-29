@@ -5,3 +5,4 @@ Nessa seção serão adicionadas dúvidas e comentários que eventualmente apare
 - O caractere '\_' (underline) não é permitido em identificadores pela especificação de Oberon, mas é suportado pelo parser em ANTLR.
 - O parser em ANTLR não suporta inteiros hexadecimais nem strings de um único caractere hexadecimal.
 - O parser em ANTLR não suporta 'ScaleFactor's em números reais.
+- Oberon especifica apenas comentários feitos com '(*' e  '*)', mas o parser em ANTLR suporta '//' e '/*' '*/'
