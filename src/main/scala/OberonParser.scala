@@ -5,19 +5,31 @@ import cats.parse.{Parser, Parser0}
 import cats.data.NonEmptyList
 import oberonAST.*
 
+object ParserSyntax {
+	implicit class ParserOps[A](p: Parser[A]) {
+		import OberonParser.*
+
+		val whitespaceP: Parser[Unit] = Parser.charIn(" \r\t\n").void
+		val whitespacesP: Parser[Unit] = whitespaceP.rep.void
+
+		val commentP: Parser[Unit] = Parser.string("/*") *> 
+			Parser.repUntil0(Parser.anyChar, Parser.string("*/").void).void
+
+		val junkP: Parser0[Unit] = (whitespacesP | commentP).rep0.void
+
+		def trim: Parser[A] = junkP.with1 *> p <* junkP
+
+		def token: Parser[A] = p <* junkP
+
+		def betweenBraces = p.between(charTokenP('('), charTokenP(')')) 
+	}
+}
+
 object OberonParser {
-	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
-	private val whitespacesP: Parser[Unit] = whitespaceP.rep.void
+	import ParserSyntax.*
 
-	private val commentP: Parser[Unit] = Parser.string("/*") *> 
-		Parser.repUntil0(Parser.anyChar, Parser.string("*/").void).void
+	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
 	
-	private val junkP: Parser0[Unit] = (whitespacesP | commentP).rep0.void
-
-	private def trim[A](p: Parser[A]): Parser[A] = junkP.with1 *> p <* junkP
-
-	private def token[A](p: Parser[A]): Parser[A] = p <* junkP
-
 	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs)
 		.map(s => s.mkString)
 
@@ -26,13 +38,13 @@ object OberonParser {
 		.map((ident, x) => ident + x)
 
 	// Implemented according to the ANTLR parser. 
-	val qualifiedNameP = 
-		(((identifierP ~ Parser.string("::")).map((a, _) => a + "::").backtrack | Parser.pure("")) ~
+	val qualifiedNameP: Parser[String] = 
+		(((identifierP ~ Parser.string("::")).map((a, _) => a + "::").backtrack | Parser.pure("")).with1 ~
 		identifierP).map((a, b) => a + b)
 
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
-	def realP: Parser[RealValue] = (digit.rep.map(nonEmptyListToInt) ~ (Parser.char('.') *>
+	def realP: Parser[RealValue] = (digit.rep.map(nonEmptyListToInt) ~ (Parser.char('.').token *>
 		digit.rep0.map(x => "0." + x.mkString)).map(x => x.toDouble))
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
@@ -59,9 +71,13 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	//def argumentsP: Parser[List[Expression]] = expressionP ~ (Parser.char(',') *>)
+	def argumentsP: Parser[List[Expression]] = expressionP.repSep(Parser.char(',').token)
+		.map(x => x.toList)
+
+	def functionCallP: Parser0[Any] = 
+	qualifiedNameP ~ argumentsP.betweenBraces
 
 	def expressionP: Parser[Expression] =
-		expressionP.between(Parser.char('('), Parser.char(')')) |
-		expValueP
+		expressionP.betweenBraces |
+		expValueP.token
 }
