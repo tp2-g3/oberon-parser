@@ -7,3 +7,6 @@ Nessa seção serão adicionadas dúvidas e comentários que eventualmente apare
 - O parser em ANTLR não suporta 'ScaleFactor's em números reais.
 - Oberon especifica apenas comentários feitos com '(\*' e  '\*)', mas o parser em ANTLR suporta '//' e '/\*' '\*/'
 - Oberon especifica que '.' deve ser utilizado em identificadores qualificados mas o parser em ANTLR utiliza '::'.
+- Parser em ANTLR não suporta '*' após definição de identificadores.
+- Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
+- O objeto NullValue herda de expressão, não seria melhor herdar de Value?

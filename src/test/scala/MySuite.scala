@@ -34,8 +34,16 @@ class ParserTestSuite extends munit.FunSuite {
 
 		val intTest1 = OberonParser.numberP.parse("9876 blabla")
 		intTest1 match {
-			case Right(_, IntValue(n)) => assert(n == 9876)
+			case Right(_, IntValue(n)) => assertEquals(n, 9876)
 			case _ => fail("Failed to parse integer 9876")
+		}
+	}
+
+	test("String test") {
+		val stringTest1 = OberonParser.quoteStringP.parse("\"uma string de teste\"abcdef")
+		stringTest1 match {
+			case Right(_, StringValue(s)) => assertEquals(s, "uma string de teste")
+			case _ => fail("Failed to parse string.")
 		}
 	}
 }

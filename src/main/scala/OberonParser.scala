@@ -9,8 +9,8 @@ object OberonParser {
 	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
 	private val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
 
-	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
-		map(s => s.mkString)
+	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs)
+		.map(s => s.mkString)
 
 	val identifierDefP: Parser[String] = 
 		(identifierP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
@@ -29,10 +29,21 @@ object OberonParser {
 		.map(RealValue.apply)
 
 	def decIntegerP: Parser[IntValue] = 
-		digit.rep.map(nonEmptyListToInt.apply).map(IntValue.apply)
+		digit.rep
+		.map(nonEmptyListToInt.apply)
+		.map(IntValue.apply)
 
 	def numberP: Parser[Number] = realP.backtrack | decIntegerP
 
-	def quoteStringP: Parser[String] = 
-		Parser.charsWhile(x => x != '"').surroundedBy(Parser.char('"'))
+	def quoteStringP: Parser[StringValue] = 
+		Parser.charsWhile(x => x != '"')
+		.surroundedBy(Parser.char('"'))
+		.map(StringValue.apply)
+	
+	def charP: Parser[CharValue] = alpha.surroundedBy(Parser.char('\'')).map(CharValue.apply)
+
+	def boolP: Parser[BoolValue] = Parser.string("True").map(x => BoolValue(true)) | 
+		Parser.string("False").map(x => BoolValue(false))
+	
+	def nullP: Parser[Expression] = Parser.string("NIL").map(x => NullValue)
 }
