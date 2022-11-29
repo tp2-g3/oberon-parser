@@ -28,8 +28,10 @@ object OberonParser {
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
 
-	private def decIntegerP: Parser[IntValue] = 
+	def decIntegerP: Parser[IntValue] = 
 		digit.rep.map(nonEmptyListToInt.apply).map(IntValue.apply)
+
+	def numberP: Parser[Number] = realP.backtrack | decIntegerP
 
 	def quoteStringP: Parser[String] = 
 		Parser.charsWhile(x => x != '"').surroundedBy(Parser.char('"'))
