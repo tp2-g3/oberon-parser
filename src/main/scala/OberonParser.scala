@@ -7,7 +7,16 @@ import oberonAST.*
 
 object OberonParser {
 	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
-	private val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
+	private val whitespacesP: Parser[Unit] = whitespaceP.rep.void
+
+	private val commentP: Parser[Unit] = Parser.string("/*") *> 
+		Parser.repUntil0(Parser.anyChar, Parser.string("*/").void).void
+	
+	private val junkP: Parser0[Unit] = (whitespacesP | commentP).rep0.void
+
+	private def trim[A](p: Parser[A]): Parser[A] = junkP.with1 *> p <* junkP
+
+	private def token[A](p: Parser[A]): Parser[A] = p <* junkP
 
 	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs)
 		.map(s => s.mkString)
@@ -46,4 +55,13 @@ object OberonParser {
 		Parser.string("False").map(x => BoolValue(false))
 	
 	def nullP: Parser[Expression] = Parser.string("NIL").map(x => NullValue)
+
+	def expValueP: Parser[Expression] = 
+		decIntegerP | realP | charP | quoteStringP | boolP | nullP
+
+	//def argumentsP: Parser[List[Expression]] = expressionP ~ (Parser.char(',') *>)
+
+	def expressionP: Parser[Expression] =
+		expressionP.between(Parser.char('('), Parser.char(')')) |
+		expValueP
 }
