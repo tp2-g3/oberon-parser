@@ -9,11 +9,11 @@ object OberonParser {
 	private val whitespaceP: Parser[Unit] = Parser.charIn(" \t\r\n").void
 	private val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
 
-	private val identifierHelperP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
-	map(s => s.mkString)
+	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
+		map(s => s.mkString)
 
-	val identifierP: Parser[String] = 
-		(identifierHelperP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
+	val identifierDefP: Parser[String] = 
+		(identifierP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
 		.map((ident, x) => ident + x)
 
 	// Implemented according to the ANTLR parser. 
@@ -24,7 +24,7 @@ object OberonParser {
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
 	def realP: Parser[RealValue] = (digit.rep.map(nonEmptyListToInt) ~ (Parser.char('.') *>
-		digit.rep0.map(x => "0." + x.toString)).map(x => x.toDouble))
+		digit.rep0.map(x => "0." + x.mkString)).map(x => x.toDouble))
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
 
