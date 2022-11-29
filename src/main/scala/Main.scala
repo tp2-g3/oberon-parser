@@ -1,5 +1,5 @@
 import oberonParser._
 
 @main def hello: Unit = {
-	//println(OberonParser.stringP.parse("36X"))
+	//println(OberonParser.qualifiedNameP.parse("modName::abc123* adasd"))
 }

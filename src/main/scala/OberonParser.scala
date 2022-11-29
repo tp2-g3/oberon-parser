@@ -38,29 +38,38 @@ object OberonParser {
 	private val whitespacesP: Parser0[Unit] = whitespaceP.rep0.void
 
 	private val addOperatorP: Parser[AddOperator] = 
-	Parser.char('+').map(x => PlusOperator) | Parser.char('-').map(x => MinusOperator) |
-	Parser.string("OR").map(x => OrOperator)
+		Parser.char('+').map(x => PlusOperator) | Parser.char('-').map(x => MinusOperator) |
+		Parser.string("OR").map(x => OrOperator)
 
 	private val mulOperatorP: Parser[MulOperator] = 
-	Parser.char('*').map(x => TimesOperator) | Parser.char('/').map(x => SlashOperator) |
-	Parser.string("DIV").map(x => DivOperator) | Parser.string("MOD").map(x => ModOperator) |
-	Parser.char('&').map(x => AndOperator)
+		Parser.char('*').map(x => TimesOperator) | Parser.char('/').map(x => SlashOperator) |
+		Parser.string("DIV").map(x => DivOperator) | Parser.string("MOD").map(x => ModOperator) |
+		Parser.char('&').map(x => AndOperator)
 
-	private val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
-	map(s => s.toString)
+	private val identifierHelperP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs).
+	map(s => s.mkString)
+
+	private val identifierP: Parser[String] = 
+		(identifierHelperP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
+		.map((ident, x) => ident + x)
+
+	// Implemented according to the ANTLR parser. 
+	private val qualifiedNameP = 
+		(((identifierP ~ Parser.string("::")).map((a, _) => a + "::").backtrack | Parser.pure("")) ~
+		identifierP).map((a, b) => a + b)
 
 	private val hexDigitP: Parser[HexDigit] = Parser.charIn("ABCDEF").map(LetterDigit.apply) | 
-	digit.map(NumberDigit.apply)
+		digit.map(NumberDigit.apply)
 
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
 	private val scaleFactorP: Parser[ScaleFactor] = (Parser.char('E') *> 
-	(Parser.char('+').map(x => Some(ScalePlus)) | Parser.char('-').map(x => Some(ScaleMinus)) |
-	Parser.pure(None)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
+		(Parser.char('+').map(x => Some(ScalePlus)) | Parser.char('-').map(x => Some(ScaleMinus)) |
+		Parser.pure(None)) ~ digit.rep.map(nonEmptyListToInt)).map(ScaleFactor.apply)
 
 	private val realHelperP: Parser[((Double, List[Char]), Option[ScaleFactor])] =
-	(digit.rep.map(nonEmptyListToInt) <* Parser.char('.')).map(x => x.toDouble) ~
-	digit.rep0 ~ (scaleFactorP.map(Some.apply) | Parser.pure(None))
+		(digit.rep.map(nonEmptyListToInt) <* Parser.char('.')).map(x => x.toDouble) ~
+		digit.rep0 ~ (scaleFactorP.map(Some.apply) | Parser.pure(None))
 
 	private def decimalPartOfList(l: List[Char]): Double = {
 		val powers = for {
@@ -103,4 +112,5 @@ object OberonParser {
 		.map(x => x.toChar.toString)
 
 	private def stringP: Parser[String] = quoteStringP.backtrack | hexStringP
+
 }
