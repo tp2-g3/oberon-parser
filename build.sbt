@@ -9,5 +9,6 @@ lazy val root = project
     scalaVersion := scala3Version,
 
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
-	libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.7"
+	  libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.7",
+    scalacOptions ++= Seq("-source:future")
   )
