@@ -22,13 +22,14 @@ object ParserSyntax {
 		def token: Parser[A] = p <* junkP
 
 		def betweenBraces = p.between(charTokenP('('), charTokenP(')')) 
+		def betweenBrackets = p.between(charTokenP('['), charTokenP(']')) 
 	}
 }
 
 object OberonParser {
 	import ParserSyntax.*
 
-	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
+	private[oberonParser] def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
 	
 	val identifierP: Parser[String] = (alpha ~ (alpha | digit).rep0).map((x, xs) => x :: xs)
 		.map(s => s.mkString)
@@ -37,7 +38,6 @@ object OberonParser {
 		(identifierP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
 		.map((ident, x) => ident + x)
 
-	// Implemented according to the ANTLR parser. 
 	val qualifiedNameP: Parser[String] = 
 		(((identifierP ~ Parser.string("::")).map((a, _) => a + "::").backtrack | Parser.pure("")).with1 ~
 		identifierP).map((a, b) => a + b)
@@ -74,10 +74,25 @@ object OberonParser {
 	def argumentsP: Parser[List[Expression]] = expressionP.repSep(Parser.char(',').token)
 		.map(x => x.toList)
 
-	def functionCallP: Parser0[Any] = 
-	qualifiedNameP ~ argumentsP.betweenBraces
+	def functionCallP: Parser[FunctionCallExpression] = 
+		(qualifiedNameP ~ argumentsP.betweenBraces)
+		.map(FunctionCallExpression.apply)
+	
+	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
+
+	def fieldAccessP: Parser[FieldAccessExpression] = 
+		((expressionP <* charTokenP('.')) ~ identifierP)
+		.map(FieldAccessExpression.apply)
+
+	def arraySubscriptP: Parser[ArraySubscript] = 
+		(expressionP ~ expressionP.betweenBrackets)
+		.map(ArraySubscript.apply)
 
 	def expressionP: Parser[Expression] =
-		expressionP.betweenBraces |
-		expValueP.token
+		expressionP.token.betweenBraces.token |
+		expValueP.token |
+		functionCallP.backtrack.token |
+		varExpressionP.token |
+		fieldAccessP.token |
+		arraySubscriptP.token
 }
