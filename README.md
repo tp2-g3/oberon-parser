@@ -14,3 +14,5 @@ Nessa seção serão adicionadas dúvidas e comentários que eventualmente apare
 - Parser em ANTLR não suporta as relações IN e IS.
 - Parser em ANTLR utiliza '&&' e '||', mas a especificação dita que deveriam ser usados '&'e 'OR'.
 - O objeto NullValue herda de expressão, não seria melhor herdar de Value?
+- Parser em ANTLR usa 'True' e 'False' ao invés de 'TRUE' e 'FALSE'.
+- Parser em ANTLR não suporta sintaxe para conjuntos.

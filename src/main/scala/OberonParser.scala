@@ -21,6 +21,8 @@ object ParserSyntax {
 
 		val token: Parser[A] = p <* junkP
 
+		def parseString(str: String) = p.trim.parse(str)
+
 		def betweenBraces: Parser[A] = p.between(charTokenP('('), charTokenP(')')) 
 		def betweenBrackets: Parser[A] = p.between(charTokenP('['), charTokenP(']')) 
 	}
@@ -30,27 +32,28 @@ object OberonParser {
 	import ParserSyntax.*
 
 	private[oberonParser] def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
-	
+	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
+
 	val identifierP: Parser[String] = 
 		(alpha ~ (alpha | digit).rep0)
 		.map((x, xs) => x :: xs)
-		.map(s => s.mkString)
+		.map(s => s.mkString).token
 
 	val identifierDefP: Parser[String] = 
 		(identifierP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
-		.map((ident, x) => ident + x)
+		.map((ident, x) => ident + x).token
 
 	val qualifiedNameHelperP: Parser[String] =
 		(identifierP <* Parser.string("::")).map(a => a + "::").backtrack
 
 	val qualifiedNameP: Parser[String] = 
 		((qualifiedNameHelperP.backtrack | Parser.pure("")).with1 ~ identifierP)
-		.map((a, b) => a + b)
+		.map((a, b) => a + b).token
 
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
 	def unsignedRealP: Parser[RealValue] = 
-		(digit.rep.map(nonEmptyListToInt) ~ (Parser.char('.').token *>
+		(digit.rep.map(nonEmptyListToInt) ~ (charTokenP('.') *>
 		digit.rep0.map(x => "0." + x.mkString)).map(x => x.toDouble))
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
@@ -66,7 +69,7 @@ object OberonParser {
 				case Some(UnaryPlusOperator) => RealValue(num)
 				case Some(UnaryMinusOperator) => RealValue(-num)
 			}
-		}
+		}.token
 
 	def unsignedDecIntegerP: Parser[IntValue] =
 		digit.rep
@@ -81,22 +84,26 @@ object OberonParser {
 				case Some(UnaryPlusOperator) => IntValue(num)
 				case Some(UnaryMinusOperator) => IntValue(-num)
 			}
-		}
+		}.token
 
 	def numberP: Parser[Number] = realP.backtrack | decIntegerP
 
 	def quoteStringP: Parser[StringValue] =
 		Parser.charsWhile(x => x != '"')
 		.surroundedBy(Parser.char('"'))
-		.map(StringValue.apply)
+		.map(StringValue.apply).token
 
-	def charP: Parser[CharValue] = alpha.surroundedBy(Parser.char('\'')).map(CharValue.apply)
+	def charP: Parser[CharValue] = 
+		alpha.surroundedBy(Parser.char('\''))
+		.map(CharValue.apply).token
 
 	def boolP: Parser[BoolValue] =
-		Parser.string("True").map(x => BoolValue(true)) |
-		Parser.string("False").map(x => BoolValue(false))
+		stringTokenP("True").map(x => BoolValue(true)).token |
+		stringTokenP("False").map(x => BoolValue(false)).token
 
-	def nullP: Parser[Expression] = Parser.string("NIL").map(x => NullValue)
+	def nullP: Parser[Expression] = 
+		stringTokenP("NIL")
+		.map(x => NullValue).token
 
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
@@ -108,7 +115,7 @@ object OberonParser {
 	def functionCallP(recP: Parser[Expression]): Parser[FunctionCallExpression] =
 		(qualifiedNameP ~ argumentsP(recP).betweenBraces)
 		.map(FunctionCallExpression.apply)
-	
+
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
 	def fieldAccessP(recP: Parser[Expression]): Parser[FieldAccessExpression] =
@@ -122,57 +129,69 @@ object OberonParser {
 	def pointerAccessP: Parser[PointerAccessExpression] =
 		(identifierP <* charTokenP('^'))
 		.map(PointerAccessExpression.apply)
-	
+
 	def notExprP(recP: Parser[Expression]): Parser[NotExpression] = 
 		(charTokenP('~') *> recP)
 		.map(NotExpression.apply)
 
-	def oprExprP(opr: String, recP: Parser[Expression]): Parser[(Expression, Expression)] = 
-		(recP <* Parser.string(opr).token.void) ~ recP
-
-	def eqExprP(recP: Parser[Expression]) = oprExprP("=", recP).map(EQExpression.apply)
-	def neqExprP(recP: Parser[Expression]) = oprExprP("#", recP).map(NEQExpression.apply)
-	def ltExprP(recP: Parser[Expression]) = oprExprP("<", recP).map(LTExpression.apply)
-	def lteExprP(recP: Parser[Expression]) = oprExprP("<=", recP).map(LTEExpression.apply)
-	def gtExprP(recP: Parser[Expression]) = oprExprP(">", recP).map(GTExpression.apply)
-	def gteExprP(recP: Parser[Expression]) = oprExprP(">=", recP).map(GTEExpression.apply)
-	def timesExprP(recP: Parser[Expression]) = oprExprP("*", recP).map(MultExpression.apply)
-	def divExprP(recP: Parser[Expression]) = oprExprP("/", recP).map(MultExpression.apply)
-	def andExprP(recP: Parser[Expression]) = oprExprP("&&", recP).map(MultExpression.apply)
-	def plusExprP(recP: Parser[Expression]) = oprExprP("+", recP).map(AddExpression.apply)
-	def modExprP(recP: Parser[Expression]) = oprExprP("MOD", recP).map(AddExpression.apply)
-	def minusExprP(recP: Parser[Expression]) = oprExprP("-", recP).map(AddExpression.apply)
-	def orExprP(recP: Parser[Expression]) = oprExprP("||", recP).map(AddExpression.apply)
-
-	def relExprP(recP: Parser[Expression]): Parser[Expression] =
-		eqExprP(recP) | neqExprP(recP) | ltExprP(recP) |
-		lteExprP(recP) | gteExprP(recP) | gteExprP(recP)
-
-	def multExpressionP(recP: Parser[Expression]): Parser[MultExpression] =
-		timesExprP(recP) | divExprP(recP) | andExprP(recP)
-	
-	def addExpressionP(recP: Parser[Expression]): Parser[AddExpression] =
-		plusExprP(recP) | modExprP(recP) | minusExprP(recP) | orExprP(recP)
-
 	def relationP: Parser[RelationOperator] =
-		Parser.string("=").map(x => EQOperator) | Parser.string("#").map(x => NEQOperator) |
-		Parser.string("<").map(x => LTEOperator) | Parser.string("<=").map(x => LTEOperator) |
-		Parser.string(">").map(x => GTOperator) | Parser.string(">=").map(x => GTEOperator)
+		stringTokenP("=").map(x => EQOperator) | stringTokenP("#").map(x => NEQOperator) |
+		stringTokenP("<").map(x => LTEOperator) | stringTokenP("<=").map(x => LTEOperator) |
+		stringTokenP(">").map(x => GTOperator) | stringTokenP(">=").map(x => GTEOperator)
 
-	def simpleExpressionP: Parser[Expression] = ???
+	def addP: Parser[AddOperator] =
+		stringTokenP("+").map(x => PlusOperator) | stringTokenP("MOD").map(x => ModOperator) |
+		stringTokenP("-").map(x => MinusOperator) | stringTokenP("||").map(x => OrOperator)
 
+	def multP: Parser[MultOperator] =
+		stringTokenP("*").map(x => TimesOperator) | stringTokenP("&&").map(x => AndOperator) |
+		stringTokenP("/").map(x => SlashOperator)
 
-	def expressionP: Parser[Expression] =
-	(simpleExpressionP ~ (relationP.token ~ simpleExpressionP).?)
-	.map { (expr1, optionExpr2) =>
-		optionExpr2 match {
-			case None => expr1
-			case Some((EQOperator, expr2)) => EQExpression(expr1, expr2)
-			case Some((NEQOperator, expr2)) => NEQExpression(expr1, expr2)
-			case Some((LTOperator, expr2)) => LTExpression(expr1, expr2)
-			case Some((LTEOperator, expr2)) => LTEExpression(expr1, expr2)
-			case Some((GTOperator, expr2)) => GTExpression(expr1, expr2)
-			case Some((GTEOperator, expr2)) => GTEExpression(expr1, expr2)
+	def setP: Parser[Expression] = ???
+
+	def factorP(recP: Parser[Expression]): Parser[Expression] =
+		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
+		recP.betweenBraces
+
+	def termP(recP: Parser[Expression]): Parser[Expression] = {
+		(factorP(recP) ~ (multP ~ factorP(recP)).rep0)
+		.map { case (x: Expression, xs: List[(MultOperator, Expression)]) =>
+			xs.foldLeft(x){ case (expr, (opr, acc)) =>
+				opr match {
+					case TimesOperator => MultExpression(expr, acc)
+					case AndOperator => AndExpression(expr, acc)
+					case SlashOperator => DivExpression(expr, acc)
+				}
+			}
+		}
+	}
+
+	def simpleExpressionP(recP: Parser[Expression]): Parser[Expression] = {
+		(termP(recP) ~ (addP ~ termP(recP)).rep0)
+		.map { case (x: Expression, xs: List[(AddOperator, Expression)]) =>
+			xs.foldLeft(x){ case (expr, (opr, acc)) =>
+				opr match {
+					case PlusOperator => AddExpression(expr, acc)
+					case ModOperator => ModExpression(expr, acc)
+					case MinusOperator => SubExpression(expr, acc)
+					case OrOperator => OrExpression(expr, acc)
+				}
+			}
+		}
+	}
+
+	def expressionP: Parser[Expression] = Parser.recursive { recP =>
+		(simpleExpressionP(recP) ~ (relationP ~ simpleExpressionP(recP)).?)
+		.map { (expr1, optionExpr2) =>
+			optionExpr2 match {
+				case None => expr1
+				case Some((EQOperator, expr2)) => EQExpression(expr1, expr2)
+				case Some((NEQOperator, expr2)) => NEQExpression(expr1, expr2)
+				case Some((LTOperator, expr2)) => LTExpression(expr1, expr2)
+				case Some((LTEOperator, expr2)) => LTEExpression(expr1, expr2)
+				case Some((GTOperator, expr2)) => GTExpression(expr1, expr2)
+				case Some((GTEOperator, expr2)) => GTEExpression(expr1, expr2)
+			}
 		}
 	}
 }
