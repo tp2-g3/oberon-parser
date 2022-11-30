@@ -78,22 +78,22 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	def argumentsP: Parser[List[Expression]] = 
-		expressionP.repSep(Parser.char(',').token)
+	def argumentsP(recP: Parser[Expression]): Parser[List[Expression]] = 
+		recP.repSep(Parser.char(',').token)
 		.map(x => x.toList)
 
-	def functionCallP: Parser[FunctionCallExpression] = 
-		(qualifiedNameP ~ argumentsP.betweenBraces)
+	def functionCallP(recP: Parser[Expression]): Parser[FunctionCallExpression] = 
+		(qualifiedNameP ~ argumentsP(recP).betweenBraces)
 		.map(FunctionCallExpression.apply)
 	
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
-	def fieldAccessP: Parser[FieldAccessExpression] = 
-		((expressionP <* charTokenP('.')) ~ identifierP)
+	def fieldAccessP(recP: Parser[Expression]): Parser[FieldAccessExpression] = 
+		((recP <* charTokenP('.')) ~ identifierP)
 		.map(FieldAccessExpression.apply)
 
-	def arraySubscriptP: Parser[ArraySubscript] = 
-		(expressionP ~ expressionP.betweenBrackets)
+	def arraySubscriptP(recP: Parser[Expression]): Parser[ArraySubscript] = 
+		(recP ~ recP.betweenBrackets)
 		.map(ArraySubscript.apply)
 
 	def pointerAccessP: Parser[PointerAccessExpression] =
@@ -104,22 +104,22 @@ object OberonParser {
 		(charTokenP('~') *> expressionP)
 		.map(NotExpression.apply)
 
-	def oprExprP(opr: String): Parser[(Expression, Expression)] = 
+	def oprExprP(opr: String, recP: Parser[Expression]): Parser[(Expression, Expression)] = 
 		(expressionP <* Parser.string(opr).token.void) ~ expressionP
 
-	def eqExprP: Parser[EQExpression] = oprExprP("=").map(EQExpression.apply)
-	def neqExprP: Parser[NEQExpression] = oprExprP("#").map(NEQExpression.apply)
-	def ltExprP: Parser[LTExpression] = oprExprP("<").map(LTExpression.apply)
-	def lteExprP: Parser[LTEExpression] = oprExprP("<=").map(LTEExpression.apply)
-	def gtExprP: Parser[GTExpression] = oprExprP(">").map(GTExpression.apply)
-	def gteExprP: Parser[GTEExpression] = oprExprP(">=").map(GTEExpression.apply)
-	def timesExprP: Parser[MultExpression] = oprExprP("*").map(MultExpression.apply) 
-	def divExprP: Parser[MultExpression] = oprExprP("/").map(MultExpression.apply) 
-	def andExprP: Parser[MultExpression] = oprExprP("&&").map(MultExpression.apply) 
-	def plusExprP: Parser[AddExpression] = oprExprP("+").map(AddExpression.apply) 
-	def modExprP: Parser[AddExpression] = oprExprP("MOD").map(AddExpression.apply) 
-	def minusExprP: Parser[AddExpression] = oprExprP("-").map(AddExpression.apply) 
-	def orExprP: Parser[AddExpression] = oprExprP("||").map(AddExpression.apply) 
+	def eqExprP: Parser[EQExpression] = oprExprP("=", recP).map(EQExpression.apply)
+	def neqExprP: Parser[NEQExpression] = oprExprP("#", recP).map(NEQExpression.apply)
+	def ltExprP: Parser[LTExpression] = oprExprP("<", recP).map(LTExpression.apply)
+	def lteExprP: Parser[LTEExpression] = oprExprP("<=", recP).map(LTEExpression.apply)
+	def gtExprP: Parser[GTExpression] = oprExprP(">", recP).map(GTExpression.apply)
+	def gteExprP: Parser[GTEExpression] = oprExprP(">=", recP).map(GTEExpression.apply)
+	def timesExprP: Parser[MultExpression] = oprExprP("*", recP).map(MultExpression.apply) 
+	def divExprP: Parser[MultExpression] = oprExprP("/", recP).map(MultExpression.apply) 
+	def andExprP: Parser[MultExpression] = oprExprP("&&", recP).map(MultExpression.apply) 
+	def plusExprP: Parser[AddExpression] = oprExprP("+", recP).map(AddExpression.apply) 
+	def modExprP: Parser[AddExpression] = oprExprP("MOD", recP).map(AddExpression.apply) 
+	def minusExprP: Parser[AddExpression] = oprExprP("-", recP).map(AddExpression.apply) 
+	def orExprP: Parser[AddExpression] = oprExprP("||", recP).map(AddExpression.apply) 
 
 	def relExprP: Parser[Expression] =
 		eqExprP | neqExprP | ltExprP | lteExprP | gteExprP | gteExprP
@@ -130,15 +130,16 @@ object OberonParser {
 	def addExpressionP: Parser[AddExpression] = 
 		plusExprP | modExprP | minusExprP | orExprP
 
-	def expressionP: Parser[Expression] =
-		expressionP.token.betweenBraces.token |
+	def expressionP: Parser[Expression] = Parser.recursive[Expression] { recurse =>
+		recurse.token.betweenBraces.token |
 		expValueP.token |
-		functionCallP.backtrack.token |
+		functionCallP(recurse).backtrack.token |
 		varExpressionP.token |
-		fieldAccessP.token |
-		arraySubscriptP.token |
+		fieldAccessP(recurse).token |
+		arraySubscriptP(recurse).token |
 		pointerAccessP.token |
-		relExprP.backtrack.token |
+		relExprP().backtrack.token |
 		multExpressionP.backtrack.token |
 		addExpressionP.backtrack.token
+	}
 }

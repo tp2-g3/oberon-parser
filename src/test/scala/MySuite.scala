@@ -46,4 +46,7 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail("Failed to parse string.")
 		}
 	}
+	test("Expression test") {
+		val exprTest1 = OberonParser.expressionP.parse("c + j + k")
+	}
 }
