@@ -47,6 +47,7 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 	test("Expression test") {
-		val exprTest1 = OberonParser.expressionP.parse("c + j + k")
+		val exprTest1 = OberonParser.expressionP.parse("c+j+k")
+		println(exprTest1)
 	}
 }
