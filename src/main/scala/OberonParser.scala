@@ -49,16 +49,39 @@ object OberonParser {
 
 	private def nonEmptyListToInt(l: NonEmptyList[Char]): Int = l.toList.mkString.toInt
 
-	def realP: Parser[RealValue] = 
+	def unsignedRealP: Parser[RealValue] = 
 		(digit.rep.map(nonEmptyListToInt) ~ (Parser.char('.').token *>
 		digit.rep0.map(x => "0." + x.mkString)).map(x => x.toDouble))
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
 
-	def decIntegerP: Parser[IntValue] =
+	private def signP: Parser[UnaryArithOperator] =
+		charTokenP('+').map(x => UnaryPlusOperator) | charTokenP('-').map(x => UnaryMinusOperator)
+
+	def realP: Parser[RealValue] =
+		(signP.?.with1 ~ unsignedRealP)
+		.map { case (sign, RealValue(num)) => 
+			sign match {
+				case None => RealValue(num)
+				case Some(UnaryPlusOperator) => RealValue(num)
+				case Some(UnaryMinusOperator) => RealValue(-num)
+			}
+		}
+
+	def unsignedDecIntegerP: Parser[IntValue] =
 		digit.rep
 		.map(nonEmptyListToInt.apply)
 		.map(IntValue.apply)
+
+	def decIntegerP: Parser[IntValue] =
+		(signP.?.with1 ~ unsignedDecIntegerP)
+		.map { case (sign, IntValue(num)) => 
+			sign match {
+				case None => IntValue(num)
+				case Some(UnaryPlusOperator) => IntValue(num)
+				case Some(UnaryMinusOperator) => IntValue(-num)
+			}
+		}
 
 	def numberP: Parser[Number] = realP.backtrack | decIntegerP
 
@@ -138,7 +161,8 @@ object OberonParser {
 
 	def simpleExpressionP: Parser[Expression] = ???
 
-	def expressionP: Parser[Expression] = 
+
+	def expressionP: Parser[Expression] =
 	(simpleExpressionP ~ (relationP.token ~ simpleExpressionP).?)
 	.map { (expr1, optionExpr2) =>
 		optionExpr2 match {

@@ -183,6 +183,10 @@ case object TimesOperator extends MultOperator
 case object SlashOperator extends MultOperator
 case object AndOperator extends MultOperator
 
+sealed trait UnaryArithOperator
+case object UnaryPlusOperator extends UnaryArithOperator
+case object UnaryMinusOperator extends UnaryArithOperator
+
 /* Statements */
 trait Statement {
   val label = Statement.getLabel()
