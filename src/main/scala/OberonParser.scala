@@ -131,20 +131,6 @@ object OberonParser {
 	def addExpressionP(recP: Parser[Expression]): Parser[AddExpression] =
 		plusExprP(recP) | modExprP(recP) | minusExprP(recP) | orExprP(recP)
 
-	// def expressionP: Parser[Expression] = Parser.recursive[Expression] { recurse =>
-	// 	recurse.token.betweenBraces.token.backtrack |
-	// 	functionCallP(recurse).token.backtrack |
-	// 	fieldAccessP(recurse).token.backtrack |
-	// 	arraySubscriptP(recurse).token.backtrack |
-	// 	pointerAccessP.token.backtrack |
-	// 	notExprP(recurse) |
-	// 	relExprP(recurse).token.backtrack |
-	// 	multExpressionP(recurse).token.backtrack |
-	// 	addExpressionP(recurse).token.backtrack
-	// 	expValueP.token.backtrack |
-	// 	varExpressionP.token.backtrack
-	// }
-
 	def relationP: Parser[RelationOperator] =
 		Parser.string("=").map(x => EQOperator) | Parser.string("#").map(x => NEQOperator) |
 		Parser.string("<").map(x => LTEOperator) | Parser.string("<=").map(x => LTEOperator) |

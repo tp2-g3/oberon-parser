@@ -4,6 +4,7 @@ Nessa seção serão adicionadas dúvidas e comentários que eventualmente apare
 - Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
 - Oberon especifica apenas comentários feitos com '(\*' e  '\*)', mas o parser em ANTLR suporta somente '//' e '/\*' '\*/'.
 - Parser em ANTLR não suporta DIV.
+- Parser em ANTLR não suporta o operador unário +.
 - Parser em ANTLR não suporta inteiros hexadecimais nem strings de um único caractere hexadecimal.
 - Parser em ANTLR não suporta comentários aninhados conforme especificado pela linguagem Oberon.
 - Parser em ANTLR não suporta 'ScaleFactor's em números reais (por exemplo 4.567E8 não é suportado).
