@@ -48,7 +48,20 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 	test("Expression test") {
-		val exprTest1 = expressionP.parseString("  1 + 2 + 3")
-		println(exprTest1)
+		val exprTest1 = expressionP.parseString("  1 + 2*3")
+		exprTest1 match {
+			case Right(_, expr) => assertEquals
+				(expr, AddExpression(IntValue(1), MultExpression(IntValue(2), IntValue(3))))
+			case _ => fail
+		}
+
+		val exprTest2 = expressionP.parseString(" - 1.23 + 5.68 - (4+2) = 5")
+		exprTest2 match {
+			case Right(_) => assert(true)
+			case _ => fail
+		}
+
+		val exprTest3 = expressionP.parseString("1 + 2+3")
+		println(exprTest3)
 	}
 }

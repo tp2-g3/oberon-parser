@@ -2,6 +2,7 @@
 Nessa seção serão adicionadas dúvidas e comentários que eventualmente apareçam durante o processo de desenvolvimento do parser.
 - O operador MOD está com a precedência de um operador de adição no parser em ANTLR, mas deveria ter a precedência de um operador de multiplicação.
 - Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
+- Parser em ANTLR usa Id em diversos lugares em que deveria utilizar qualifiedName, por exemplo em PointerAccess.
 - Oberon especifica apenas comentários feitos com '(\*' e  '\*)', mas o parser em ANTLR suporta somente '//' e '/\*' '\*/'.
 - Parser em ANTLR não suporta DIV.
 - Parser em ANTLR não suporta o operador unário +.
@@ -16,3 +17,4 @@ Nessa seção serão adicionadas dúvidas e comentários que eventualmente apare
 - O objeto NullValue herda de expressão, não seria melhor herdar de Value?
 - Parser em ANTLR usa 'True' e 'False' ao invés de 'TRUE' e 'FALSE'.
 - Parser em ANTLR não suporta sintaxe para conjuntos.
+- Parser em ANTLR não contêm uma boa parte da especificação de designator. Além disso, a parte de designators que está implementada não é utilizada em expression, apenas em statement.

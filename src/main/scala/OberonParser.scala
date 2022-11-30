@@ -23,7 +23,7 @@ object ParserSyntax {
 
 		def parseString(str: String) = p.trim.parse(str)
 
-		def betweenBraces: Parser[A] = p.between(charTokenP('('), charTokenP(')')) 
+		def betweenParen: Parser[A] = p.between(charTokenP('('), charTokenP(')')) 
 		def betweenBrackets: Parser[A] = p.between(charTokenP('['), charTokenP(']')) 
 	}
 }
@@ -108,31 +108,27 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	def argumentsP(recP: Parser[Expression]): Parser[List[Expression]] =
-		recP.repSep(Parser.char(',').token)
+	def argumentsP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
+		exprRecP.repSep(Parser.char(',').token)
 		.map(x => x.toList)
 
-	def functionCallP(recP: Parser[Expression]): Parser[FunctionCallExpression] =
-		(qualifiedNameP ~ argumentsP(recP).betweenBraces)
+	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
+		(qualifiedNameP ~ argumentsP(exprRecP).betweenParen)
 		.map(FunctionCallExpression.apply)
 
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
-	def fieldAccessP(recP: Parser[Expression]): Parser[FieldAccessExpression] =
-		((recP <* charTokenP('.')) ~ identifierP)
+	def fieldAccessP(exprRecP: Parser[Expression]): Parser[FieldAccessExpression] =
+		((exprRecP <* charTokenP('.')) ~ identifierP)
 		.map(FieldAccessExpression.apply)
 
-	def arraySubscriptP(recP: Parser[Expression]): Parser[ArraySubscript] =
-		(recP ~ recP.betweenBrackets)
+	def arraySubscriptP(exprRecP: Parser[Expression]): Parser[ArraySubscript] =
+		(exprRecP ~ exprRecP.betweenBrackets)
 		.map(ArraySubscript.apply)
 
 	def pointerAccessP: Parser[PointerAccessExpression] =
-		(identifierP <* charTokenP('^'))
+		(qualifiedNameP <* charTokenP('^'))
 		.map(PointerAccessExpression.apply)
-
-	def notExprP(recP: Parser[Expression]): Parser[NotExpression] = 
-		(charTokenP('~') *> recP)
-		.map(NotExpression.apply)
 
 	def relationP: Parser[RelationOperator] =
 		stringTokenP("=").map(x => EQOperator) | stringTokenP("#").map(x => NEQOperator) |
@@ -147,14 +143,18 @@ object OberonParser {
 		stringTokenP("*").map(x => TimesOperator) | stringTokenP("&&").map(x => AndOperator) |
 		stringTokenP("/").map(x => SlashOperator)
 
-	def setP: Parser[Expression] = ???
+	def notFactorP(facRecP: Parser[Expression]): Parser[Expression] =
+		(charTokenP('~') *> facRecP)
+		.map(NotExpression.apply)
 
-	def factorP(recP: Parser[Expression]): Parser[Expression] =
+	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
-		recP.betweenBraces
+		exprRecP.betweenParen | notFactorP(facRecP) | pointerAccessP.backtrack |
+		arraySubscriptP(exprRecP).backtrack | fieldAccessP(exprRecP).backtrack | varExpressionP
+	}
 
-	def termP(recP: Parser[Expression]): Parser[Expression] = {
-		(factorP(recP) ~ (multP ~ factorP(recP)).rep0)
+	def termP(exprRecP: Parser[Expression]): Parser[Expression] = {
+		(factorP(exprRecP) ~ (multP ~ factorP(exprRecP)).rep0)
 		.map { case (x: Expression, xs: List[(MultOperator, Expression)]) =>
 			xs.foldLeft(x){ case (expr, (opr, acc)) =>
 				opr match {
@@ -166,8 +166,8 @@ object OberonParser {
 		}
 	}
 
-	def simpleExpressionP(recP: Parser[Expression]): Parser[Expression] = {
-		(termP(recP) ~ (addP ~ termP(recP)).rep0)
+	def simpleExpressionP(exprRecP: Parser[Expression]): Parser[Expression] =
+		(termP(exprRecP) ~ (addP ~ termP(exprRecP)).rep0)
 		.map { case (x: Expression, xs: List[(AddOperator, Expression)]) =>
 			xs.foldLeft(x){ case (expr, (opr, acc)) =>
 				opr match {
@@ -178,10 +178,9 @@ object OberonParser {
 				}
 			}
 		}
-	}
 
-	def expressionP: Parser[Expression] = Parser.recursive { recP =>
-		(simpleExpressionP(recP) ~ (relationP ~ simpleExpressionP(recP)).?)
+	def expressionP: Parser[Expression] = Parser.recursive { exprRecP =>
+		(simpleExpressionP(exprRecP) ~ (relationP ~ simpleExpressionP(exprRecP)).?)
 		.map { (expr1, optionExpr2) =>
 			optionExpr2 match {
 				case None => expr1
