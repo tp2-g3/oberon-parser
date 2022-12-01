@@ -108,14 +108,6 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	def argumentsP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
-		exprRecP.repSep(Parser.char(',').token)
-		.map(x => x.toList)
-
-	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
-		(qualifiedNameP ~ argumentsP(exprRecP).betweenParen)
-		.map(FunctionCallExpression.apply)
-
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
 	def fieldAccessP(exprRecP: Parser[Expression]): Parser[FieldAccessExpression] =
@@ -147,10 +139,39 @@ object OberonParser {
 		(charTokenP('~') *> facRecP)
 		.map(NotExpression.apply)
 
+	def exprListP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
+		exprRecP.repSep(charTokenP(','))
+		.map(x => x.toList)
+
+	def actualParametersP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
+		exprListP(exprRecP).betweenParen
+
+	def exprDesignatorP(exprRecP: Parser[Expression]): Parser[Expression] =
+		(qualifiedNameP ~ selectorP(exprRecP).?)
+		.map { case (name, optionSelector) =>
+			optionSelector match {
+				case None => VarExpression(name)
+				case Some(FieldSelector(field)) => FieldAccessExpression(VarExpression(name), field)
+				case Some(PointerSelector) => PointerAccessExpression(name) 
+				case Some(ArraySelector(expr)) => ArraySubscript(VarExpression(name), expr)
+			}
+		}
+
+	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
+		(qualifiedNameP ~ actualParametersP(exprRecP))
+		.map(FunctionCallExpression.apply)
+
+	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] = 
+		(charTokenP('.') *> identifierP).map(FieldSelector.apply) |
+		charTokenP('^').map(x => PointerSelector) |
+		qualifiedNameP.betweenParen.map(TypeGuardSelector.apply) |
+		exprRecP.betweenBrackets.map(ArraySelector.apply)
+
+
 	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
-		exprRecP.betweenParen | notFactorP(facRecP) | pointerAccessP.backtrack |
-		arraySubscriptP(exprRecP).backtrack | fieldAccessP(exprRecP).backtrack | varExpressionP
+		exprRecP.betweenParen | notFactorP(facRecP) | exprDesignatorP(exprRecP).backtrack |
+		functionCallP(exprRecP)
 	}
 
 	def termP(exprRecP: Parser[Expression]): Parser[Expression] = {

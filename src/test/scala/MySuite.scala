@@ -61,7 +61,7 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail
 		}
 
-		val exprTest3 = expressionP.parseString("1 + 2+3")
+		val exprTest3 = expressionP.parseString("GET(a)")
 		println(exprTest3)
 	}
 }
