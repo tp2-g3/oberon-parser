@@ -233,7 +233,6 @@ case class SimpleCase(condition: Expression, stmt: Statement) extends CaseAltern
 case class RangeCase(min: Expression, max: Expression, stmt: Statement) extends CaseAlternative
 
 sealed trait Selector
-case class FieldSelector(fieldName: String) extends Selector
 case object PointerSelector extends Selector
 case class ArraySelector(exp: Expression) extends Selector
 

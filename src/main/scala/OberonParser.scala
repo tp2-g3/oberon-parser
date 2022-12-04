@@ -110,9 +110,11 @@ object OberonParser {
 
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
-	def fieldAccessP(exprRecP: Parser[Expression]): Parser[FieldAccessExpression] =
-		((exprRecP <* charTokenP('.')) ~ identifierP)
-		.map(FieldAccessExpression.apply)
+	def fieldAccessExprP(exprRecP: Parser[Expression]): Parser[Expression] =
+		((varExpressionP | exprRecP.betweenParen) ~ (charTokenP('.') *> identifierP).rep)
+		.map { case (expr, names: NonEmptyList[String]) =>
+			names.toList.foldLeft(expr:Expression)((acc, name) => FieldAccessExpression(acc, name))
+		}
 
 	def arraySubscriptP(exprRecP: Parser[Expression]): Parser[ArraySubscript] =
 		(exprRecP ~ exprRecP.betweenBrackets)
@@ -151,7 +153,6 @@ object OberonParser {
 		.map { case (name, optionSelector: Option[Selector]) =>
 			optionSelector match {
 				case None => VarExpression(name)
-				case Some(FieldSelector(field)) => FieldAccessExpression(VarExpression(name), field)
 				case Some(PointerSelector) => PointerAccessExpression(name) 
 				case Some(ArraySelector(expr)) => ArraySubscript(VarExpression(name), expr)
 			}
@@ -161,14 +162,14 @@ object OberonParser {
 		(qualifiedNameP ~ actualParametersP(exprRecP))
 		.map(FunctionCallExpression.apply)
 
-	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] = 
-		(charTokenP('.') *> identifierP).map(FieldSelector.apply) |
+	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
 		charTokenP('^').map(x => PointerSelector) |
 		exprRecP.betweenBrackets.map(ArraySelector.apply)
 
 
 	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
+		fieldAccessExprP(exprRecP).backtrack |
 		functionCallP(exprRecP).backtrack | exprDesignatorP(exprRecP).backtrack |
 		exprRecP.betweenParen | notFactorP(facRecP)
 	}
