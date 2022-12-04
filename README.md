@@ -21,4 +21,4 @@
 ## Anotações
 - O objeto NullValue herda de Expression, não seria melhor herdar de Value?
 - Decidiu-se que serão feitas algumas extensões a AST para facilitar o desenvolvimento. Idealmente, nenhuma alteração feita quebrará a compatibilidade com o restante da implementação da linguagem.
-- Não tenho certeza se a sintaxe implementada em ANTLR para acesso de campo está correta. Se não me engano seriam necessários parenteses em torno da expressão. De qualquer forma, esse tipo de coisa não é especificado pela linguagem, como dito acima.
+- Não tenho certeza se a sintaxe implementada em ANTLR para acesso de campo está correta. Se não me engano seriam necessários parenteses em torno da expressão.
