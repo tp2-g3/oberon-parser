@@ -232,11 +232,10 @@ trait CaseAlternative
 case class SimpleCase(condition: Expression, stmt: Statement) extends CaseAlternative
 case class RangeCase(min: Expression, max: Expression, stmt: Statement) extends CaseAlternative
 
-trait Selector
+sealed trait Selector
 case class FieldSelector(fieldName: String) extends Selector
 case object PointerSelector extends Selector
 case class ArraySelector(exp: Expression) extends Selector
-case class TypeGuardSelector(qualName: String) extends Selector
 
 sealed trait Designator
 

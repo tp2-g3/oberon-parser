@@ -148,7 +148,7 @@ object OberonParser {
 
 	def exprDesignatorP(exprRecP: Parser[Expression]): Parser[Expression] =
 		(qualifiedNameP ~ selectorP(exprRecP).?)
-		.map { case (name, optionSelector) =>
+		.map { case (name, optionSelector: Option[Selector]) =>
 			optionSelector match {
 				case None => VarExpression(name)
 				case Some(FieldSelector(field)) => FieldAccessExpression(VarExpression(name), field)
@@ -164,14 +164,13 @@ object OberonParser {
 	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] = 
 		(charTokenP('.') *> identifierP).map(FieldSelector.apply) |
 		charTokenP('^').map(x => PointerSelector) |
-		qualifiedNameP.betweenParen.map(TypeGuardSelector.apply) |
 		exprRecP.betweenBrackets.map(ArraySelector.apply)
 
 
 	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
-		exprRecP.betweenParen | notFactorP(facRecP) | exprDesignatorP(exprRecP).backtrack |
-		functionCallP(exprRecP)
+		functionCallP(exprRecP).backtrack | exprDesignatorP(exprRecP).backtrack |
+		exprRecP.betweenParen | notFactorP(facRecP)
 	}
 
 	def termP(exprRecP: Parser[Expression]): Parser[Expression] = {
