@@ -62,6 +62,8 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 
 		val exprTest3 = expressionP.parseString("(a^).c.d.e")
-		println(exprTest3)
+
+		val exprTest4 = expressionP.parseString("GET(p).abc")
+		println(exprTest4)
 	}
 }

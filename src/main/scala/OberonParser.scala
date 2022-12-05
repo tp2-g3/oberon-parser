@@ -111,7 +111,7 @@ object OberonParser {
 	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
 
 	def fieldAccessExprP(exprRecP: Parser[Expression]): Parser[Expression] =
-		((varExpressionP | exprRecP.betweenParen) ~ (charTokenP('.') *> identifierP).rep)
+		((exprRecP.betweenParen | functionCallP(exprRecP).backtrack | varExpressionP) ~ (charTokenP('.') *> identifierP).rep)
 		.map { case (expr, names: NonEmptyList[String]) =>
 			names.toList.foldLeft(expr:Expression)((acc, name) => FieldAccessExpression(acc, name))
 		}
