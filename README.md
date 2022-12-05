@@ -16,9 +16,8 @@
 - Parser em ANTLR usa 'True' e 'False' ao invés de 'TRUE' e 'FALSE'.
 - Parser em ANTLR não suporta sintaxe para conjuntos.
 - Parser em ANTLR não contêm uma boa parte da especificação de designator. Além disso, a parte de designators que está implementada não é utilizada em expression, apenas em statement.
-- Parser em ANTLR não implementa typeguards.
+- Parser em ANTLR não suporta typeguards.
 
 ## Anotações
 - O objeto NullValue herda de Expression, não seria melhor herdar de Value?
 - Decidiu-se que serão feitas algumas extensões a AST para facilitar o desenvolvimento. Idealmente, nenhuma alteração feita quebrará a compatibilidade com o restante da implementação da linguagem.
-- Não tenho certeza se a sintaxe implementada em ANTLR para acesso de campo está correta. Se não me engano seriam necessários parenteses em torno da expressão.
