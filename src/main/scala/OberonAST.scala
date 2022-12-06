@@ -174,7 +174,6 @@ case object GTEOperator extends RelationOperator
 
 sealed trait AddOperator
 case object PlusOperator extends AddOperator
-case object ModOperator extends AddOperator // TODO: This should be a MultOperator.
 case object MinusOperator extends AddOperator
 case object OrOperator extends AddOperator
 
@@ -182,6 +181,7 @@ sealed trait MultOperator
 case object TimesOperator extends MultOperator
 case object SlashOperator extends MultOperator
 case object AndOperator extends MultOperator
+case object ModOperator extends MultOperator
 
 sealed trait UnaryArithOperator
 case object UnaryPlusOperator extends UnaryArithOperator

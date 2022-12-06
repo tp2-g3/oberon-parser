@@ -130,12 +130,12 @@ object OberonParser {
 		stringTokenP(">").map(x => GTOperator) | stringTokenP(">=").map(x => GTEOperator)
 
 	def addP: Parser[AddOperator] =
-		stringTokenP("+").map(x => PlusOperator) | stringTokenP("MOD").map(x => ModOperator) |
+		stringTokenP("+").map(x => PlusOperator) |
 		stringTokenP("-").map(x => MinusOperator) | stringTokenP("||").map(x => OrOperator)
 
 	def multP: Parser[MultOperator] =
 		stringTokenP("*").map(x => TimesOperator) | stringTokenP("&&").map(x => AndOperator) |
-		stringTokenP("/").map(x => SlashOperator)
+		stringTokenP("/").map(x => SlashOperator) | stringTokenP("MOD").map(x => ModOperator)
 
 	def notFactorP(facRecP: Parser[Expression]): Parser[Expression] =
 		(charTokenP('~') *> facRecP)
@@ -182,6 +182,7 @@ object OberonParser {
 					case TimesOperator => MultExpression(expr, acc)
 					case AndOperator => AndExpression(expr, acc)
 					case SlashOperator => DivExpression(expr, acc)
+					case ModOperator => ModExpression(expr, acc)
 				}
 			}
 		}
@@ -193,7 +194,6 @@ object OberonParser {
 			xs.foldLeft(x){ case (expr, (opr, acc)) =>
 				opr match {
 					case PlusOperator => AddExpression(expr, acc)
-					case ModOperator => ModExpression(expr, acc)
 					case MinusOperator => SubExpression(expr, acc)
 					case OrOperator => OrExpression(expr, acc)
 				}
