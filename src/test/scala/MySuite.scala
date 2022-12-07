@@ -66,4 +66,30 @@ class ParserTestSuite extends munit.FunSuite {
 		val exprTest4 = expressionP.parseString("GET(p).abc")
 		println(exprTest4)
 	}
+
+	test("Bool test") {
+		val boolTest1 = boolP.parseString("True = False")
+		boolTest1 match {
+			case Left(_) => fail("Bool test 1 failed to recognize True")
+			case Right(str, value) => assert(value == BoolValue(true) && str == "= False")
+		}
+
+		val boolTest2 = boolP.parseString("False = a + b")
+		boolTest2 match {
+			case Left(_) => fail("Bool test 2 failed to recognize False")
+			case Right(str, value) => assert(value == BoolValue(false) && str == "= a + b")
+		}
+
+		val boolTest3 = boolP.parseString("FALSE = a + b")
+		boolTest3 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Bool parser misrecognized FALSE as boolean")
+		}
+
+		val boolTest4 = boolP.parseString("TRUE = a + b")
+		boolTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Bool parser misrecognized TRUE as boolean")
+		}
+	}
 }
