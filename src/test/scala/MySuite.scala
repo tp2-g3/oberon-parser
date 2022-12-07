@@ -92,4 +92,28 @@ class ParserTestSuite extends munit.FunSuite {
 			case Right(_) => fail("Bool parser misrecognized TRUE as boolean")
 		}
 	}
+
+	test("Mult test") {
+		val multTest1 = multP.parseString("* 5")
+		val multTest2 = multP.parseString("&& True")
+		val multTest3 = multP.parseString("/ 3")
+		val multTest4 = multP.parseString("MOD 6 + 5")
+
+		multTest1 match {
+			case Left(_) => fail
+			case Right(str, value) => assert(value == TimesOperator && str == "5")
+		}
+		multTest2 match {
+			case Left(_) => fail
+			case Right(str, value) => assert(value == AndOperator && str == "True")
+		}
+		multTest3 match {
+			case Left(_) => fail
+			case Right(str, value) => assert(value == SlashOperator && str == "3")
+		}
+		multTest4 match {
+			case Left(_) => fail
+			case Right(str, value) => assert(value == ModOperator && str == "6 + 5")
+		}
+	}
 }
