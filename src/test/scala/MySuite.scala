@@ -4,9 +4,9 @@ import oberonAST.*
 
 class ParserTestSuite extends munit.FunSuite {
 	test("Qualified identifier test") {
-			val qualTest1 = qualifiedNameP.parseString("myModule::myIdentName123 bla blabla asdna")
+			val qualTest1 = qualifiedNameP.parseString("myModule::myIdentName123 blabla1")
 			qualTest1 match {
-				case Right((_, parsed)) => assertEquals(parsed, "myModule::myIdentName123")
+				case Right(("blabla1", parsed)) => assertEquals(parsed, "myModule::myIdentName123")
 				case _ => fail("Qualified identifier incorrectly parsed.")
 			}
 
@@ -23,7 +23,7 @@ class ParserTestSuite extends munit.FunSuite {
 
 		val realTest1 = numberP.parseString("123.4567")
 		realTest1 match {
-			case Right(_, RealValue(x)) => assert(eq(x, 123.4567))
+			case Right("", RealValue(x)) => assert(eq(x, 123.4567))
 			case _ => fail("Failed to parse real number 123.4567")
 		}
 
@@ -35,7 +35,7 @@ class ParserTestSuite extends munit.FunSuite {
 
 		val intTest1 = numberP.parseString("9876 blabla")
 		intTest1 match {
-			case Right(_, IntValue(n)) => assertEquals(n, 9876)
+			case Right("blabla", IntValue(n)) => assertEquals(n, 9876)
 			case _ => fail("Failed to parse integer 9876")
 		}
 	}
@@ -43,41 +43,40 @@ class ParserTestSuite extends munit.FunSuite {
 	test("String test") {
 		val stringTest1 = quoteStringP.parseString("\"uma string de teste\"abcdef")
 		stringTest1 match {
-			case Right(_, StringValue(s)) => assertEquals(s, "uma string de teste")
+			case Right("abcdef", StringValue(s)) => assertEquals(s, "uma string de teste")
 			case _ => fail("Failed to parse string.")
 		}
 	}
 	test("Expression test") {
 		val exprTest1 = expressionP.parseString("  1 + 2*3")
 		exprTest1 match {
-			case Right(_, expr) => assertEquals
+			case Right("", expr) => assertEquals
 				(expr, AddExpression(IntValue(1), MultExpression(IntValue(2), IntValue(3))))
 			case _ => fail
 		}
 
 		val exprTest2 = expressionP.parseString(" - 1.23 + 5.68 - (4+2) = 5")
 		exprTest2 match {
-			case Right(_) => assert(true)
+			case Right(str, _) => assert(str == "")
 			case _ => fail
 		}
 
 		val exprTest3 = expressionP.parseString("(a^).c.d.e")
 
 		val exprTest4 = expressionP.parseString("GET(p).abc")
-		println(exprTest4)
 	}
 
 	test("Bool test") {
 		val boolTest1 = boolP.parseString("True = False")
 		boolTest1 match {
-			case Left(_) => fail("Bool test 1 failed to recognize True")
-			case Right(str, value) => assert(value == BoolValue(true) && str == "= False")
+			case Right("= False", value) => assert(value == BoolValue(true))
+			case _ => fail("Bool test 1 failed to recognize True")
 		}
 
 		val boolTest2 = boolP.parseString("False = a + b")
 		boolTest2 match {
-			case Left(_) => fail("Bool test 2 failed to recognize False")
-			case Right(str, value) => assert(value == BoolValue(false) && str == "= a + b")
+			case Right("= a + b", value) => assert(value == BoolValue(false))
+			case _ => fail("Bool test 2 failed to recognize False")
 		}
 
 		val boolTest3 = boolP.parseString("FALSE = a + b")
