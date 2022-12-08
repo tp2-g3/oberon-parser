@@ -119,4 +119,24 @@ class ParserTestSuite extends munit.FunSuite {
 			case Right(str, value) => assert(value == ModOperator && str == "6 + 5")
 		}
 	}
+	
+	test("Add test") {
+		val addTest1 = addP.parseString("+")
+		addTest1 match {
+			case Right(str, value) => assert(value == PlusOperator && str == "")
+			case Left(_) => fail("Failed to parse add test 1")
+		}
+
+		val addTest2 = addP.parseString("-")
+		addTest2 match {
+			case Right(str, value) => assert(value == MinusOperator && str == "")
+			case Left(_) => fail("Failed to parse add test 2")
+		}
+
+		val addTest3 = addP.parseString("||")
+		addTest3 match {
+			case Right(str, value) => assert(value == OrOperator && str == "")
+			case Left(_) => fail("Failed to parse add test 3")
+		}
+	}
 }
