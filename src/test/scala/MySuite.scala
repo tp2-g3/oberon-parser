@@ -63,7 +63,11 @@ class ParserTestSuite extends munit.FunSuite {
 
 		val exprTest3 = expressionP.parseString("(a^).c.d.e")
 
-		val exprTest4 = expressionP.parseString("GET(p).abc")
+		val exprTest4 = expressionP.parseString("1 >= 2")
+		exprTest4 match {
+			case Right("", value) => assert(value == GTEExpression(IntValue(1), IntValue(2)))
+			case _ => fail("Failed expression 4 test")
+		}
 	}
 
 	test("Bool test") {
