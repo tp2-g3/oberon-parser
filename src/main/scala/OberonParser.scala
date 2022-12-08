@@ -125,9 +125,12 @@ object OberonParser {
 		.map(PointerAccessExpression.apply)
 
 	def relationP: Parser[RelationOperator] =
-		stringTokenP("=").map(x => EQOperator) | stringTokenP("#").map(x => NEQOperator) |
-		stringTokenP("<").map(x => LTEOperator) | stringTokenP("<=").map(x => LTEOperator) |
-		stringTokenP(">").map(x => GTOperator) | stringTokenP(">=").map(x => GTEOperator)
+		stringTokenP("=").map(x => EQOperator) |
+		stringTokenP("#").map(x => NEQOperator) |
+		stringTokenP("<=").map(x => LTEOperator).backtrack |
+		stringTokenP("<").map(x => LTOperator) |
+		stringTokenP(">=").map(x => GTEOperator).backtrack |
+		stringTokenP(">").map(x => GTOperator)
 
 	def addP: Parser[AddOperator] =
 		stringTokenP("+").map(x => PlusOperator) |
