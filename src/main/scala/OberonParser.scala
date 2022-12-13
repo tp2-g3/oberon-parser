@@ -108,22 +108,6 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
-
-	def fieldAccessExprP(exprRecP: Parser[Expression]): Parser[Expression] =
-		((exprRecP.betweenParen | functionCallP(exprRecP).backtrack | varExpressionP) ~ (charTokenP('.') *> identifierP).rep)
-		.map { case (expr, names: NonEmptyList[String]) =>
-			names.toList.foldLeft(expr:Expression)((acc, name) => FieldAccessExpression(acc, name))
-		}
-
-	def arraySubscriptP(exprRecP: Parser[Expression]): Parser[ArraySubscript] =
-		(exprRecP ~ exprRecP.betweenBrackets)
-		.map(ArraySubscript.apply)
-
-	def pointerAccessP: Parser[PointerAccessExpression] =
-		(qualifiedNameP <* charTokenP('^'))
-		.map(PointerAccessExpression.apply)
-
 	def relationP: Parser[RelationOperator] =
 		stringTokenP("=").map(x => EQOperator) |
 		stringTokenP("#").map(x => NEQOperator) |
