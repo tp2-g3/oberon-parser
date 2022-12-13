@@ -61,8 +61,7 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail
 		}
 
-		val exprTest3 = expressionP.parseString("abc.array.abc")
-		println(exprTest3)
+		val exprTest3 = expressionP.parseString("abc[5][1+2].prop1")
 
 		val exprTest4 = expressionP.parseString("1 >= 2")
 		exprTest4 match {

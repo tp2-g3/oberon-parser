@@ -151,30 +151,26 @@ object OberonParser {
 	def actualParametersP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
 		exprListP(exprRecP).betweenParen
 
-	def toDesignator(desHelper: DesignatorHelper): Designator =
-		desHelper match {
-			case DesignatorHelper(name, Nil) => VarAssignment(name)
-			case DesignatorHelper(name, List(PointerSelector)) => PointerAssignment(name)
-			case DesignatorHelper(name, List(ArraySelector(index)))
-				=> ArrayAssignment(VarExpression(name), index)
-			case DesignatorHelper(name, List(FieldSelector(field))) 
-				=> RecordAssignment(VarExpression(name), field)
-			case x => {
-				println("ERRRO:");
-				println(x);
-				???
-				}
-		}
-
 	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
 		(charTokenP('.') *> identifierP).map(FieldSelector.apply).backtrack |
 		exprRecP.betweenBrackets.map(ArraySelector.apply) |
 		charTokenP('^').map(_ => PointerSelector)
 
-	def designatorP(exprRecP: Parser[Expression]): Parser[Designator] = 
+	def designatorP(exprRecP: Parser[Expression]): Parser[DesignatorHelper] = 
 		(qualifiedNameP ~ selectorP(exprRecP).rep0)
 		.map(DesignatorHelper.apply)
-		.map(toDesignator)
+
+	def designatorHelperToExpression(designator: DesignatorHelper): Expression =
+		designator match {
+			case DesignatorHelper(name, selectors) =>
+				selectors.foldLeft(VarExpression(name): Expression){ (acc, value) =>
+					value match {
+						case PointerSelector => ComplexPointerExpression(acc)
+						case ArraySelector(index) => ArraySubscript(acc, index)
+						case FieldSelector(propName) => FieldAccessExpression(acc, propName)
+					}
+				}
+		}
 
 	def designatorToExpression(designator: Designator): Expression = 
 		designator match {
@@ -189,10 +185,12 @@ object OberonParser {
 		.map{ case (designator, optionParams) => 
 			optionParams match {
 				case Some(params) => designator match {
-					case VarAssignment(name) => FunctionCallExpression(name, params)
-					case _ => ???
+					case DesignatorHelper(name, Nil) => 
+					FunctionCallExpression(name, params)
+					case designator =>
+						ComplexFunctionCallExpression(designatorHelperToExpression(designator), params)
 				}
-				case None => designatorToExpression(designator)
+				case None => designatorHelperToExpression(designator)
 			}
 		
 		}

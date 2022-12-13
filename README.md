@@ -1,4 +1,5 @@
 ## Divergências em relação a especificação formal da linguagem
+- Na AST o PointerAccessExpression aceita apenas strings, mas deveria aceitar expression.
 - Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
 - Parser em ANTLR usa Id em diversos lugares em que deveria utilizar qualifiedName, por exemplo em PointerAccess.
 - Parser em ANTLR suporta(?) acesso de campo para expression, mas é especificado apenas acesso de campo para qualified identifier. O mesmo vale para acesso de lista.
