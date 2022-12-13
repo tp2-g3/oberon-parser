@@ -178,6 +178,12 @@ object OberonParser {
 			}
 		
 		}
+		.map( expr => 
+			expr match {
+				case ComplexPointerExpression(VarExpression(name)) => PointerAccessExpression(name)
+				case _ => expr
+			}
+		)
 
 	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
 		(qualifiedNameP ~ actualParametersP(exprRecP))
