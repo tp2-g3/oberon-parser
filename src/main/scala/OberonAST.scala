@@ -155,7 +155,6 @@ case class ArraySubscript(arrayBase: Expression, index: Expression) extends Expr
 case class Undef() extends Expression
 case class FieldAccessExpression(exp: Expression, name: String) extends Expression
 case class VarExpression(name: String) extends Expression
-case class GeneralFunctionCallExpression(expr: Expression, args: List[Expression]) extends Expression
 case class EQExpression(left:  Expression, right: Expression) extends Expression
 case class NEQExpression(left:  Expression, right: Expression) extends Expression
 case class GTExpression(left:  Expression, right: Expression) extends Expression
