@@ -31,7 +31,7 @@ object ParserSyntax {
 object OberonParser {
 	import ParserSyntax.*
 
-	private[oberonParser] def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
+	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
 	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
 
 	val identifierP: Parser[String] = 
@@ -151,29 +151,61 @@ object OberonParser {
 	def actualParametersP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
 		exprListP(exprRecP).betweenParen
 
+	def toDesignator(desHelper: DesignatorHelper): Designator =
+		desHelper match {
+			case DesignatorHelper(name, Nil) => VarAssignment(name)
+			case DesignatorHelper(name, List(PointerSelector)) => PointerAssignment(name)
+			case DesignatorHelper(name, List(ArraySelector(index)))
+				=> ArrayAssignment(VarExpression(name), index)
+			case DesignatorHelper(name, List(FieldSelector(field))) 
+				=> RecordAssignment(VarExpression(name), field)
+			case x => {
+				println("ERRRO:");
+				println(x);
+				???
+				}
+		}
+
+	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
+		(charTokenP('.') *> identifierP).map(FieldSelector.apply).backtrack |
+		exprRecP.betweenBrackets.map(ArraySelector.apply) |
+		charTokenP('^').map(_ => PointerSelector)
+
+	def designatorP(exprRecP: Parser[Expression]): Parser[Designator] = 
+		(qualifiedNameP ~ selectorP(exprRecP).rep0)
+		.map(DesignatorHelper.apply)
+		.map(toDesignator)
+
+	def designatorToExpression(designator: Designator): Expression = 
+		designator match {
+			case VarAssignment(name) => VarExpression(name)
+			case ArrayAssignment(array, index) => ArraySubscript(array, index)
+			case RecordAssignment(record, field) => FieldAccessExpression(record, field)
+			case PointerAssignment(name) => PointerAccessExpression(name)
+		}
+
 	def exprDesignatorP(exprRecP: Parser[Expression]): Parser[Expression] =
-		(qualifiedNameP ~ selectorP(exprRecP).?)
-		.map { case (name, optionSelector: Option[Selector]) =>
-			optionSelector match {
-				case None => VarExpression(name)
-				case Some(PointerSelector) => PointerAccessExpression(name) 
-				case Some(ArraySelector(expr)) => ArraySubscript(VarExpression(name), expr)
+		(designatorP(exprRecP) ~ actualParametersP(exprRecP).?)
+		.map{ case (designator, optionParams) => 
+			optionParams match {
+				case Some(params) => designator match {
+					case VarAssignment(name) => FunctionCallExpression(name, params)
+					case _ => ???
+				}
+				case None => designatorToExpression(designator)
 			}
+		
 		}
 
 	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
 		(qualifiedNameP ~ actualParametersP(exprRecP))
 		.map(FunctionCallExpression.apply)
 
-	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
-		charTokenP('^').map(x => PointerSelector) |
-		exprRecP.betweenBrackets.map(ArraySelector.apply)
 
 
 	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
-		fieldAccessExprP(exprRecP).backtrack |
-		functionCallP(exprRecP).backtrack | exprDesignatorP(exprRecP).backtrack |
+		exprDesignatorP(exprRecP).backtrack |
 		exprRecP.betweenParen | notFactorP(facRecP)
 	}
 
