@@ -138,6 +138,15 @@ case class CharValue(value: Char) extends Value { type T = Char }
 case class StringValue(value: String) extends Value { type T = String }
 case class BoolValue(value: Boolean) extends Value { type T = Boolean }
 
+sealed trait PointerAccess extends Expression
+case class PointerAccessExpression(name: String) extends PointerAccess
+case class ComplexPointerExpression(exp: Expression) extends PointerAccess
+
+sealed trait FunctionCall extends Expression
+case class FunctionCallExpression(name: String, args: List[Expression]) extends FunctionCall
+case class ComplexFunctionCallExpression(exp: Expression, args: List[Expression]) extends FunctionCall
+
+
 case object NullValue extends Expression
 case class Location(loc: Int) extends Expression
 case class Brackets(exp: Expression) extends Expression
@@ -145,9 +154,7 @@ case class ArrayValue(value: ListBuffer[Expression], arrayType: ArrayType) exten
 case class ArraySubscript(arrayBase: Expression, index: Expression) extends Expression
 case class Undef() extends Expression
 case class FieldAccessExpression(exp: Expression, name: String) extends Expression
-case class PointerAccessExpression(name: String) extends Expression
 case class VarExpression(name: String) extends Expression
-case class FunctionCallExpression(name: String, args: List[Expression]) extends Expression
 case class EQExpression(left:  Expression, right: Expression) extends Expression
 case class NEQExpression(left:  Expression, right: Expression) extends Expression
 case class GTExpression(left:  Expression, right: Expression) extends Expression

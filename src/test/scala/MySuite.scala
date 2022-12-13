@@ -52,17 +52,16 @@ class ParserTestSuite extends munit.FunSuite {
 		exprTest1 match {
 			case Right("", expr) => assertEquals
 				(expr, AddExpression(IntValue(1), MultExpression(IntValue(2), IntValue(3))))
-			case _ => fail
+			case _ => fail("Expression test 1 failed")
 		}
 
 		val exprTest2 = expressionP.parseString(" - 1.23 + 5.68 - (4+2) = 5")
 		exprTest2 match {
 			case Right(str, _) => assert(str == "")
-			case _ => fail
+			case _ => fail("Expression test 2 failed")
 		}
 
-		val exprTest3 = expressionP.parseString("abc.array.abc")
-		println(exprTest3)
+		val exprTest3 = expressionP.parseString("a.b^")
 
 		val exprTest4 = expressionP.parseString("1 >= 2")
 		exprTest4 match {
@@ -104,19 +103,19 @@ class ParserTestSuite extends munit.FunSuite {
 		val multTest4 = multP.parseString("MOD 6 + 5")
 
 		multTest1 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 1 failed")
 			case Right(str, value) => assert(value == TimesOperator && str == "5")
 		}
 		multTest2 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 2 failed")
 			case Right(str, value) => assert(value == AndOperator && str == "True")
 		}
 		multTest3 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 3 failed")
 			case Right(str, value) => assert(value == SlashOperator && str == "3")
 		}
 		multTest4 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 4 failed")
 			case Right(str, value) => assert(value == ModOperator && str == "6 + 5")
 		}
 	}
