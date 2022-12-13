@@ -235,6 +235,7 @@ case class RangeCase(min: Expression, max: Expression, stmt: Statement) extends 
 sealed trait Selector
 case object PointerSelector extends Selector
 case class ArraySelector(exp: Expression) extends Selector
+case class FieldSelector(field: String) extends Selector
 
 sealed trait Designator
 
@@ -243,6 +244,7 @@ case class ArrayAssignment(array: Expression, index: Expression) extends Designa
 case class RecordAssignment(record: Expression, field: String) extends Designator
 case class PointerAssignment(pointerName: String) extends Designator
 
+case class DesignatorHelper(name: String, selectors: List[Selector])
 
 /**
  * User defined types.
