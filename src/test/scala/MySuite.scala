@@ -202,5 +202,10 @@ class ParserTestSuite extends munit.FunSuite {
 	test("Statement Test 21"){
 		println(statementP.parse("readShortInt(x)"))
 	}
-	
+	test("Statement Test 22"){
+		println(statementP.parse("WHILE i+1 = j DO readInt(x) ; x := 10 ; c := 2*x END"))
+	}
+	test("Statement Test 23"){
+		println(statementP.parse("WHILE i+1 = j DO IF 2*c = x THEN readInt(x) ; x := 10 ; c := 2*x END END"))
+	}
 }

@@ -312,9 +312,18 @@ object OberonParser {
 		}
 	}
 
+	def whileStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("WHILE").token *> expressionP <* Parser.string("DO").token) ~ 
+		sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+		.map {
+			(x,y) => WhileStmt(x,y)
+		}
+	}
+
 	def statementP: Parser0[Option[Statement]] = {
-		(ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP | readIntStmtP | readLongIntStmtP | 
-		readRealStmtP | readLongRealStmtP | assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP).?
+		(whileStmtP(Parser.defer0(statementP)) | ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP | 
+		readIntStmtP | readLongIntStmtP | readRealStmtP | readLongRealStmtP | assignmentStmtP.backtrack | writeStmtP | 
+		procedureCallStmtP).?
 
 	}
 }
