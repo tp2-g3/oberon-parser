@@ -140,67 +140,130 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 	test("Statement Test 1"){
-		println(statementP.parse("x.y.z :=3"))
+		statementP.parse("x.y.z :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 2"){
-		println(statementP.parse("x.y.z[5] :=3"))
+		statementP.parse("x.y.z := 3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 3"){
-		println(statementP.parse("z^ :=3"))
+		statementP.parse("z^ :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 4"){
-		println(statementP.parse("a.z^ :=3"))
+		statementP.parse("a.z^ :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 5"){
-		println(statementP.parse("a :=3"))
+		statementP.parse("a :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 6"){
-		println(statementP.parse("z[i+10] :=3"))
+		statementP.parse("z[i+10] :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 7"){
-		println(statementP.parse("write(x+5)"))
+		statementP.parse("write(x+5)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 8"){
-		println(statementP.parse("seilaman(x,5)"))
+		statementP.parse("seilaman(x,5)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 9"){
-		println(statementP.parse("seilaman()"))
+		statementP.parse("seilaman()") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 10"){
-		println(statementP.parse("IF 1+3=4 THEN a:=3 END"))
+		statementP.parse("IF 1+3=4 THEN a:=3 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 11"){
-		println(statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END"))
+		statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 12"){
-		println(statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END"))
+		statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 13"){
-		println(statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END"))
+		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 14"){
-		println(statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END"))
+		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 15"){
-		println(statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END"))
+		statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 16"){
-		println(statementP.parse("readLongReal(x)"))
+		statementP.parse("readLongReal(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 17"){
-		println(statementP.parse("readReal(x)"))
+		statementP.parse("readReal(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 18"){
-		println(statementP.parse("readLongInt(x)"))
+		statementP.parse("readLongInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 19"){
-		println(statementP.parse("readInt(x)"))
+		statementP.parse("readInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 20"){
-		println(statementP.parse("readChar(x)"))
+		statementP.parse("readChar(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	test("Statement Test 21"){
-		println(statementP.parse("readShortInt(x)"))
+		statementP.parse("readShortInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
 	}
 	
 }
