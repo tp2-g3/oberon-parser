@@ -61,8 +61,8 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail("Expression test 2 failed")
 		}
 
-		val exprTest3 = expressionP.parseString("a.b^")
-
+		val exprTest3 = expressionP.parseString("a.b.c^")
+		
 		val exprTest4 = expressionP.parseString("1 >= 2")
 		exprTest4 match {
 			case Right("", value) => assert(value == GTEExpression(IntValue(1), IntValue(2)))
@@ -139,4 +139,68 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 3")
 		}
 	}
+	test("Statement Test 1"){
+		println(statementP.parse("x.y.z :=3"))
+	}
+	test("Statement Test 2"){
+		println(statementP.parse("x.y.z[5] :=3"))
+	}
+	test("Statement Test 3"){
+		println(statementP.parse("z^ :=3"))
+	}
+	test("Statement Test 4"){
+		println(statementP.parse("a.z^ :=3"))
+	}
+	test("Statement Test 5"){
+		println(statementP.parse("a :=3"))
+	}
+	test("Statement Test 6"){
+		println(statementP.parse("z[i+10] :=3"))
+	}
+	test("Statement Test 7"){
+		println(statementP.parse("write(x+5)"))
+	}
+	test("Statement Test 8"){
+		println(statementP.parse("seilaman(x,5)"))
+	}
+	test("Statement Test 9"){
+		println(statementP.parse("seilaman()"))
+	}
+	test("Statement Test 10"){
+		println(statementP.parse("IF 1+3=4 THEN a:=3 END"))
+	}
+	test("Statement Test 11"){
+		println(statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END"))
+	}
+	test("Statement Test 12"){
+		println(statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END"))
+	}
+	test("Statement Test 13"){
+		println(statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END"))
+	}
+	test("Statement Test 14"){
+		println(statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END"))
+	}
+	test("Statement Test 15"){
+		println(statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END"))
+	}
+	test("Statement Test 16"){
+		println(statementP.parse("readLongReal(x)"))
+	}
+	test("Statement Test 17"){
+		println(statementP.parse("readReal(x)"))
+	}
+	test("Statement Test 18"){
+		println(statementP.parse("readLongInt(x)"))
+	}
+	test("Statement Test 19"){
+		println(statementP.parse("readInt(x)"))
+	}
+	test("Statement Test 20"){
+		println(statementP.parse("readChar(x)"))
+	}
+	test("Statement Test 21"){
+		println(statementP.parse("readShortInt(x)"))
+	}
+	
 }

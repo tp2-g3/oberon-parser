@@ -250,6 +250,7 @@ case class VarAssignment(varName: String) extends Designator
 case class ArrayAssignment(array: Expression, index: Expression) extends Designator
 case class RecordAssignment(record: Expression, field: String) extends Designator
 case class PointerAssignment(pointerName: String) extends Designator
+case class ComplexPointerAssignment(expression: Expression) extends Designator
 
 case class DesignatorHelper(name: String, selectors: List[Selector])
 
