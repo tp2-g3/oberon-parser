@@ -20,5 +20,7 @@
 - Parser em ANTLR não suporta typeguards.
 
 ## Anotações
+- perguntar para o professor sobre o id do Read(algo) deveria aceitar expressão ?
+- Perguntar a onde o comentario é valido no programa
 - O objeto NullValue herda de Expression, não seria melhor herdar de Value?
 - Decidiu-se que serão feitas algumas extensões a AST para facilitar o desenvolvimento. Idealmente, nenhuma alteração feita quebrará a compatibilidade com o restante da implementação da linguagem.
