@@ -47,7 +47,7 @@ object OberonParser {
 		.map((ident, x) => ident + x).token
 
 	val qualifiedNameHelperP: Parser[String] =
-		(identifierP <* Parser.string("::")).map(a => a + "::").backtrack
+		(identifierP <* Parser.string("::").token).map(a => a + "::").backtrack
 
 	val qualifiedNameP: Parser[String] = 
 		((qualifiedNameHelperP.backtrack | Parser.pure("")).with1 ~ identifierP)
@@ -208,7 +208,7 @@ object OberonParser {
 
 	def expressionP: Parser[Expression] = Parser.recursive { exprRecP =>
 		(simpleExpressionP(exprRecP) ~ (relationP ~ simpleExpressionP(exprRecP)).?)
-		.map { (expr1, optionExpr2) =>
+		.map { (expr1: Expression, optionExpr2: Option[(RelationOperator, Expression)]) =>
 			optionExpr2 match {
 				case None => expr1
 				case Some((EQOperator, expr2)) => EQExpression(expr1, expr2)
