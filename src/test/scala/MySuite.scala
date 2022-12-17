@@ -139,136 +139,256 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 3")
 		}
 	}
-	test("Statement Test 1"){
-		statementP.parse("x.y.z :=3") match {
+	test("Statement Test Assignment"){
+		val test1 = statementP.parse("x.y.z := 3") 
+		val test2 = statementP.parse("z^ :=3")
+		val test3 = statementP.parse("a.z^ :=3")
+
+		test1 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(AssignmentStmt(RecordAssignment(FieldAccessExpression(VarExpression(x),y),z),IntValue(3)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+
+		test2 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(AssignmentStmt(PointerAssignment(z),IntValue(3)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+
+		test3 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(AssignmentStmt(ComplexPointerAssignment(FieldAccessExpression(VarExpression(a),z)),IntValue(3)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+
+		val test4 = statementP.parse("a :=3") 
+		val test5 = statementP.parse("z[i+10] :=3")
+		val test6 = statementP.parse("z := 3+y")
+
+		test4 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(AssignmentStmt(VarAssignment(a),IntValue(3)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test5 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(AssignmentStmt(ArrayAssignment(VarExpression(z),AddExpression(VarExpression(i),IntValue(10))),IntValue(3)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test6 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(AssignmentStmt(VarAssignment(z),AddExpression(IntValue(3),VarExpression(y))))) =>  true
+			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Statement Test 2"){
-		statementP.parse("x.y.z := 3") match {
-			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
-		}
-	}
-	test("Statement Test 3"){
-		statementP.parse("z^ :=3") match {
-			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
-		}
-	}
-	test("Statement Test 4"){
-		statementP.parse("a.z^ :=3") match {
-			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
-		}
-	}
-	test("Statement Test 5"){
-		statementP.parse("a :=3") match {
-			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
-		}
-	}
-	test("Statement Test 6"){
-		statementP.parse("z[i+10] :=3") match {
-			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
-		}
-	}
-	test("Statement Test 7"){
+	test("Statement write Test"){
 		statementP.parse("write(x+5)") match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(WriteStmt(AddExpression(VarExpression(x),IntValue(5))))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Statement Test 8"){
-		statementP.parse("seilaman(x,5)") match {
+	test("Statement procedure call Test"){
+		val test1 = statementP.parse("seilaman(x,5)")
+		val test2 = statementP.parse("seilaman()")
+
+		test1 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ProcedureCallStmt(seilaman,List(VarExpression(x), IntValue(5))))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 9"){
-		statementP.parse("seilaman()") match {
+		test2 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right(str,Some(ProcedureCallStmt(seilaman,List()))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Statement Test 10"){
-		statementP.parse("IF 1+3=4 THEN a:=3 END") match {
+	test("Statement ifElse and ifElseIf Test"){
+		val test1 = statementP.parse("IF 1+3=4 THEN a:=3 END")
+		val test2 = statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END")
+		val test3 = statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END")
+
+		test1 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment(a),IntValue(3)))),None))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 11"){
-		statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END") match {
+		test2 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(3)))),
+			Some(SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(1)))))))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 12"){
-		statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END") match {
+		test3 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),VarExpression(a)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(3)))),
+			List(ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(2)))))),
+			Some(SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(1)))))))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 13"){
-		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END") match {
+		
+		val test4 = statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END")
+		val test5 = statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END")
+
+		test4 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(3)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(3)))),
+			List(ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(2)))))),None))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 14"){
-		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+		test5 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(3))
+			,SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(3)))),
+			List(ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(2))))), 
+			ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(5)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(5)))))),None))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 15"){
-		statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+
+		val test6 = statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END")
+		
+		test6 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(IfElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(3)),
+			SequenceStmt(List(IfElseStmt(EQExpression(AddExpression(IntValue(1),VarExpression(i)),SubExpression(VarExpression(j),IntValue(2))),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(1)), AssignmentStmt(VarAssignment("b"),IntValue(3)), 
+			AssignmentStmt(VarAssignment("c"),AddExpression(VarExpression("a"),VarExpression("b"))), WriteStmt(VarExpression(c)))),None))),
+			List(ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(4)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(2))))), 
+			ElseIfStmt(EQExpression(AddExpression(IntValue(1),IntValue(3)),IntValue(5)),
+			SequenceStmt(List(AssignmentStmt(VarAssignment("a"),IntValue(5)))))),None))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Statement Test 16"){
-		statementP.parse("readLongReal(x)") match {
+	test("Statement Read's Test"){
+		val test1 = statementP.parse("readLongReal(x)")
+		val test2 = statementP.parse("readReal(x)")
+		val test3 = statementP.parse("readLongInt(x)")
+
+		test1 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadLongRealStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 17"){
-		statementP.parse("readReal(x)") match {
+		test2 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadRealStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 18"){
-		statementP.parse("readLongInt(x)") match {
+		test3 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadLongIntStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 19"){
-		statementP.parse("readInt(x)") match {
+
+		val test4 = statementP.parse("readInt(x)")
+		val test5 = statementP.parse("readChar(x)")
+		val test6 = statementP.parse("readShortInt(x)") 
+
+		test4 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadIntStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 20"){
-		statementP.parse("readChar(x)") match {
+		test5 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadCharStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
-	}
-	test("Statement Test 21"){
-		statementP.parse("readShortInt(x)") match {
+		test6 match {
 			case Left(_) => fail("Statement test failed")
-			case Right(str, _) => assert(str == "")
+			case Right("",Some(ReadShortIntStmt(x))) => true
+			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Statement Test 22"){
-		println(statementP.parse("WHILE i+1 = j DO readInt(x) ; x := 10 ; c := 2*x END"))
+	test("Statement Loop's Test"){
+		val test1 = statementP.parse("WHILE i+1 = j DO readInt(x) ; x := 10 ; c := 2*x END")
+		val test2 = statementP.parse("WHILE i+1 = j DO IF 2*c = x THEN readInt(x) ; x := 10 ; c := 2*x END END")
+		val test3 = statementP.parse("REPEAT readInt(x) ; x := 10 ; c := 2*x UNTIL i+1 = j")
+
+		test1 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(WhileStmt(EQExpression(AddExpression(VarExpression("i"),IntValue(1)),VarExpression("j")),
+			SequenceStmt(List(ReadIntStmt("x"), AssignmentStmt(VarAssignment("x"),IntValue(10)), 
+			AssignmentStmt(VarAssignment("c"),MultExpression(IntValue(2),VarExpression("x")))))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test2 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(WhileStmt(EQExpression(AddExpression(VarExpression("i"),IntValue(1)),VarExpression("j")),
+			SequenceStmt(List(IfElseStmt(EQExpression(MultExpression(IntValue(2),VarExpression("c")),VarExpression("x")),
+			SequenceStmt(List(ReadIntStmt("x"), AssignmentStmt(VarAssignment("x"),IntValue(10)), 
+			AssignmentStmt(VarAssignment("c"),MultExpression(IntValue(2),VarExpression("x"))))),None)))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test3 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(RepeatUntilStmt(EQExpression(AddExpression(VarExpression("i"),IntValue(1)),VarExpression("j")),
+			SequenceStmt(List(ReadIntStmt("x"), AssignmentStmt(VarAssignment("x"),IntValue(10)), 
+			AssignmentStmt(VarAssignment("c"),MultExpression(IntValue(2),VarExpression("x")))))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+
+		val test4 = statementP.parse("REPEAT IF 2*c = x THEN readInt(x) ; x := 10 ; c := 2*x END UNTIL i+1 = j")
+		val test5 = statementP.parse("FOR x:=1 ; y:=2 TO x<y DO write(x) ; write(y) ; x:=x+1 END")
+		val test6 = statementP.parse("WHILE x<y DO write(x) ; write(y) ; x:=x+1 END") 
+
+		test4 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(RepeatUntilStmt(EQExpression(AddExpression(VarExpression("i"),IntValue(1)),VarExpression("j")),
+			SequenceStmt(List(IfElseStmt(EQExpression(MultExpression(IntValue(2),VarExpression("c")),VarExpression("x")),
+			SequenceStmt(List(ReadIntStmt("x"), AssignmentStmt(VarAssignment("x"),IntValue(10)), 
+			AssignmentStmt(VarAssignment("c"),MultExpression(IntValue(2),VarExpression("x"))))),None)))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test5 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(ForStmt(SequenceStmt(List(AssignmentStmt(VarAssignment("x"),IntValue(1)), 
+			AssignmentStmt(VarAssignment("y"),IntValue(2)))),LTExpression(VarExpression("x"),VarExpression("y")),
+			SequenceStmt(List(WriteStmt(VarExpression("x")), WriteStmt(VarExpression("y")), 
+			AssignmentStmt(VarAssignment("x"),AddExpression(VarExpression("x"),IntValue(1)))))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+		test6 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(WhileStmt(LTExpression(VarExpression("x"),VarExpression("y")),SequenceStmt(List(WriteStmt(VarExpression("x")), 
+			WriteStmt(VarExpression("y")), AssignmentStmt(VarAssignment("x"),AddExpression(VarExpression("x"),IntValue(1)))))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+
+		val test7 = statementP.parse("LOOP write(x) ; write(y) ; END")
+		
+		test7 match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(LoopStmt(SequenceStmt(List(WriteStmt(VarExpression(x)), WriteStmt(VarExpression(y))))))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
 	}
-	test("Statement Test 23"){
-		println(statementP.parse("WHILE i+1 = j DO IF 2*c = x THEN readInt(x) ; x := 10 ; c := 2*x END END"))
+	test("Statement Return Test"){
+		statementP.parse("RETURN x") match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(ReturnStmt(VarExpression(x)))) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+	}
+	test("Statement Exit Test"){
+		statementP.parse("EXIT") match {
+			case Left(_) => fail("Statement test failed")
+			case Right("",Some(ExitStmt())) => true
+			case Right(_,_) => fail("Statement test failed")
+		}
+	}
+	test("Sono statement"){
+		import cats.parse.{Parser, Parser0}
+		println(caseAlternativeP(Parser.defer0(statementP)).parse("1: x:=10"))
 	}
 }
