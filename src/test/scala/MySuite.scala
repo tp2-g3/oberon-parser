@@ -389,6 +389,7 @@ class ParserTestSuite extends munit.FunSuite {
 	}
 	test("Sono statement"){
 		import cats.parse.{Parser, Parser0}
-		println(caseAlternativeP(Parser.defer0(statementP)).parse("1: x:=10"))
+		println(caseAlternativeP(Parser.defer0(statementP)).parse("1: x:=10 asuhdadsui"))
+		println(caseStmtP(Parser.defer0(statementP)).parse("CASE xs OF 1: x:= 10 END"))
 	}
 }

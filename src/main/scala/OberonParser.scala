@@ -360,18 +360,22 @@ object OberonParser {
 	}
 
 	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("CASE").token *> expressionP <* Parser.string("OF").token) ~ 
-		(caseAlternativeP(stmtRecP)).rep0 ~ (stringTokenP("ELSE") *> stmtRecP).? <* Parser.string("END").token)
+		(
+			(expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
+			(caseAlternativeP(stmtRecP).backtrack.rep0 ~ (stringTokenP("ELSE") *> stmtRecP).?)
+			<* stringTokenP("END")
+		)
 		.map {
-			case ((expr,cases),Some(stmt)) => CaseStmt(expr,cases,stmt)
+			case (expr, (cases, Some(stmt))) => CaseStmt(expr,cases,stmt)
+			case (expr, (cases, None)) => CaseStmt(expr,cases,None)
 		}
 	}
 
 	def statementP: Parser0[Option[Statement]] = {
-		(caseStmtP(Parser.defer0(statementP)).backtrack | loopStmtP(Parser.defer0(statementP)).backtrack | forEachStmtP(Parser.defer0(statementP)).backtrack | forStmtP(Parser.defer0(statementP)).backtrack |
-		repeatStmtP(Parser.defer0(statementP)).backtrack | whileStmtP(Parser.defer0(statementP)).backtrack | exitP.backtrack | returnP.backtrack |
-		ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP.backtrack | readCharStmtP.backtrack | readIntStmtP.backtrack | 
-		readLongIntStmtP.backtrack | readRealStmtP.backtrack |readLongRealStmtP.backtrack | assignmentStmtP.backtrack |
-		 writeStmtP.backtrack | procedureCallStmtP.backtrack).?
+		(caseStmtP(Parser.defer0(statementP)) | loopStmtP(Parser.defer0(statementP)) | forEachStmtP(Parser.defer0(statementP)) | forStmtP(Parser.defer0(statementP)) |
+		repeatStmtP(Parser.defer0(statementP)) | whileStmtP(Parser.defer0(statementP)) | exitP | returnP |
+		ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP | readIntStmtP | 
+		readLongIntStmtP | readRealStmtP |readLongRealStmtP | assignmentStmtP.backtrack |
+		 writeStmtP | procedureCallStmtP.backtrack).?
 	}
 }
