@@ -350,24 +350,23 @@ object OberonParser {
 		.map(_ => ExitStmt())
 	}
 
+	// TODO: Use sequenceStmtP instead of stmtP.
 	def caseAlternativeP(stmtRecP: Parser0[Option[Statement]]): Parser[CaseAlternative] = {
-		(expressionP ~ (Parser.string("..").token *> expressionP).? ~ 
-		(Parser.string(":").token *> stmtRecP))
-		.map {
-			case ((min,Some(max)),Some(stmt)) => RangeCase(min,max,stmt)
-			case ((min,None),Some(stmt)) => SimpleCase(min,stmt)
-		}
+		(
+			numberP ~ stringTokenP("..")
+		)
+		.map(_ => SimpleCase(NullValue, SequenceStmt(Nil)))
 	}
 
 	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
 		(
 			(expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
-			(caseAlternativeP(stmtRecP).backtrack.rep0 ~ (stringTokenP("ELSE") *> stmtRecP).?)
+			(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~ (stringTokenP("ELSE") *> stmtRecP).?)
 			<* stringTokenP("END")
 		)
 		.map {
-			case (expr, (cases, Some(stmt))) => CaseStmt(expr,cases,stmt)
-			case (expr, (cases, None)) => CaseStmt(expr,cases,None)
+			case (expr, (cases, Some(stmt))) => CaseStmt(expr,cases.toList,stmt)
+			case (expr, (cases, None)) => CaseStmt(expr,cases.toList,None)
 		}
 	}
 
