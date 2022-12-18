@@ -33,7 +33,7 @@ object ParserSyntax {
 object OberonParser {
 	import ParserSyntax.*
 
-	private[oberonParser] def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
+	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
 	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
 
 
@@ -111,22 +111,6 @@ object OberonParser {
 	def expValueP: Parser[Expression] = 
 		decIntegerP | realP | charP | quoteStringP | boolP | nullP
 
-	def varExpressionP: Parser[VarExpression] = qualifiedNameP.map(VarExpression.apply)
-
-	def fieldAccessExprP(exprRecP: Parser[Expression]): Parser[Expression] =
-		((exprRecP.betweenParen | functionCallP(exprRecP).backtrack | varExpressionP) ~ (charTokenP('.') *> identifierP).rep)
-		.map { case (expr, names: NonEmptyList[String]) =>
-			names.toList.foldLeft(expr:Expression)((acc, name) => FieldAccessExpression(acc, name))
-		}
-
-	def arraySubscriptP(exprRecP: Parser[Expression]): Parser[ArraySubscript] =
-		(exprRecP ~ exprRecP.betweenBrackets)
-		.map(ArraySubscript.apply)
-
-	def pointerAccessP: Parser[PointerAccessExpression] =
-		(qualifiedNameP <* charTokenP('^'))
-		.map(PointerAccessExpression.apply)
-
 	def relationP: Parser[RelationOperator] =
 		stringTokenP("=").map(x => EQOperator) |
 		stringTokenP("#").map(x => NEQOperator) |
@@ -154,33 +138,66 @@ object OberonParser {
 	def actualParametersP(exprRecP: Parser[Expression]): Parser[List[Expression]] =
 		exprListP(exprRecP).betweenParen
 
-	def exprDesignatorP(exprRecP: Parser[Expression]): Parser[Expression] =
-		(qualifiedNameP ~ selectorP(exprRecP).?)
-		.map { case (name, optionSelector: Option[Selector]) =>
-			optionSelector match {
-				case None => VarExpression(name)
-				case Some(PointerSelector) => PointerAccessExpression(name) 
-				case Some(ArraySelector(expr)) => ArraySubscript(VarExpression(name), expr)
+	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
+		(charTokenP('.') *> identifierP).map(FieldSelector.apply).backtrack |
+		exprRecP.betweenBrackets.map(ArraySelector.apply) |
+		charTokenP('^').map(_ => PointerSelector)
+
+	def designatorP(exprRecP: Parser[Expression]): Parser[DesignatorHelper] = 
+		(qualifiedNameP ~ selectorP(exprRecP).rep0)
+		.map(DesignatorHelper.apply)
+
+	def designatorHelperToExpression(designator: DesignatorHelper): Expression =
+		designator match {
+			case DesignatorHelper(name, selectors) => {
+				selectors.foldLeft(VarExpression(name): Expression){ (acc, value) =>
+					value match {
+						case PointerSelector => ComplexPointerExpression(acc)
+						case ArraySelector(index) => ArraySubscript(acc, index)
+						case FieldSelector(propName) => FieldAccessExpression(acc, propName)
+					}
+				}
 			}
 		}
 
-	def functionCallP(exprRecP: Parser[Expression]): Parser[FunctionCallExpression] =
-		(qualifiedNameP ~ actualParametersP(exprRecP))
-		.map(FunctionCallExpression.apply)
+	def designatorHelperToDesignator(designator: DesignatorHelper): Designator =
+		designatorHelperToExpression(designator) match {
+			case VarExpression(propName) => VarAssignment(propName)
+			case FieldAccessExpression(acc,propName) => RecordAssignment(acc,propName)
+			case ArraySubscript(acc,index) => ArrayAssignment(acc,index)
+			case ComplexPointerExpression(VarExpression(name)) => PointerAssignment(name)
+			case ComplexPointerExpression(acc) => ComplexPointerAssignment(acc)
+		}
 
-	def selectorP(exprRecP: Parser[Expression]): Parser[Selector] =
-		charTokenP('^').map(x => PointerSelector) |
-		exprRecP.betweenBrackets.map(ArraySelector.apply)
+	def exprDesignatorP(exprRecP: Parser[Expression]): Parser[Expression] =
+		(designatorP(exprRecP) ~ actualParametersP(exprRecP).?)
+		.map{ case (designator, optionParams) => 
+			optionParams match {
+				case Some(params) => designator match {
+					case DesignatorHelper(name, Nil) => 
+					FunctionCallExpression(name, params)
+					case designator =>
+						ComplexFunctionCallExpression(designatorHelperToExpression(designator), params)
+				}
+				case None => designatorHelperToExpression(designator)
+			}
+		
+		}
+		.map( expr => 
+			expr match {
+				case ComplexPointerExpression(VarExpression(name)) => PointerAccessExpression(name)
+				case _ => expr
+			}
+		)
 
 
 	def factorP(exprRecP: Parser[Expression]): Parser[Expression] = Parser.recursive { facRecP =>
 		numberP | quoteStringP | nullP.backtrack | boolP.backtrack |
-		fieldAccessExprP(exprRecP).backtrack |
-		functionCallP(exprRecP).backtrack | exprDesignatorP(exprRecP).backtrack |
+		exprDesignatorP(exprRecP).backtrack |
 		exprRecP.betweenParen | notFactorP(facRecP)
 	}
 
-	def termP(exprRecP: Parser[Expression]): Parser[Expression] = {
+	def termP(exprRecP: Parser[Expression]): Parser[Expression] = 
 		(factorP(exprRecP) ~ (multP ~ factorP(exprRecP)).rep0)
 		.map { case (x: Expression, xs: List[(MultOperator, Expression)]) =>
 			xs.foldLeft(x){ case (expr, (opr, acc)) =>
@@ -192,7 +209,6 @@ object OberonParser {
 				}
 			}
 		}
-	}
 
 	def simpleExpressionP(exprRecP: Parser[Expression]): Parser[Expression] =
 		(termP(exprRecP) ~ (addP ~ termP(exprRecP)).rep0)
@@ -219,5 +235,89 @@ object OberonParser {
 				case Some((GTEOperator, expr2)) => GTEExpression(expr1, expr2)
 			}
 		}
+	}
+
+	def assignmentStmtP: Parser[Statement] = {
+		((designatorP(expressionP) <* Parser.string(":=").token) ~ expressionP)
+		.map((a, b) =>  AssignmentStmt(designatorHelperToDesignator(a),b))
+	}
+	
+	def writeStmtP: Parser[Statement] = {
+		(Parser.string("write") *> expressionP)
+		.map(x => WriteStmt(x))
+	}
+
+	def procedureCallStmtP: Parser[Statement] = {
+		(qualifiedNameP ~ (exprListP(expressionP).?).between(charTokenP('('), charTokenP(')')))
+		.map{ (x,y) => (x,y) match { 
+				case (x,None) => ProcedureCallStmt(x,Nil)
+				case (x,Some(listinha)) => ProcedureCallStmt(x,listinha)
+			}
+		}
+	}
+	
+	def readCharStmtP: Parser[Statement] = {
+		(Parser.string("readChar") *> identifierP.betweenParen)
+		.map(x => ReadCharStmt(x))
+	}
+
+	def readRealStmtP: Parser[Statement] = {
+		(Parser.string("readReal") *> identifierP.betweenParen)
+		.map(x => ReadRealStmt(x))
+	}
+
+	def readLongRealStmtP: Parser[Statement] = {
+		(Parser.string("readLongReal") *> identifierP.betweenParen)
+		.map(x => ReadLongRealStmt(x))
+	}
+
+	def readIntStmtP: Parser[Statement] = {
+		(Parser.string("readInt") *> identifierP.betweenParen)
+		.map(x => ReadIntStmt(x))
+	}
+
+	def readLongIntStmtP: Parser[Statement] = {
+		(Parser.string("readLongInt") *> identifierP.betweenParen)
+		.map(x => ReadLongIntStmt(x))
+	}
+
+	def readShortIntStmtP: Parser[Statement] = {
+		(Parser.string("readShortInt") *> identifierP.betweenParen)
+		.map(x => ReadShortIntStmt(x))
+	}
+
+	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("IF").token *> expressionP <* Parser.string("THEN").token) ~ sequenceStmtP(stmtRecP) ~ 
+		((Parser.string("ELSEIF").token *> expressionP <* Parser.string("THEN").token) ~ sequenceStmtP(stmtRecP)).rep0 ~ 
+		(Parser.string("ELSE").token *> sequenceStmtP(stmtRecP)).? <* Parser.string("END").token)
+		.map{ 
+			case (((expr,statement1),(head1,head2)::listElseIf),statement2) => {
+				val foldedList = listElseIf.foldLeft(List(ElseIfStmt(head1,head2))){ 
+					case (x,(acc1,acc2)) => (x :+ ElseIfStmt(acc1,acc2)) 
+				}
+				IfElseIfStmt(expr,statement1,foldedList,statement2)
+			}
+			case((((expr,statement1),Nil),statement2)) => IfElseStmt(expr,statement1,statement2)
+		}
+	}
+
+	def sequenceStmtP(stmtRecP: Parser0[Option[Statement]]): Parser0[Statement] = {
+		(stmtRecP ~ (Parser.string(";").token *> stmtRecP).rep0)
+		.map {
+			case(Some(stmt),listStmt) => {
+				val foldedList = listStmt.foldLeft(List(stmt)){
+					case(x,Some(y)) => x :+ y 
+					case(x,None) => x
+				}
+				SequenceStmt(foldedList)
+			}
+			case(None,_) => SequenceStmt(Nil)
+		}
+	}
+
+	def statementP: Parser0[Option[Statement]] = {
+		(ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP | readIntStmtP | readLongIntStmtP | 
+		readRealStmtP | readLongRealStmtP | assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP).?
+
 	}
 }

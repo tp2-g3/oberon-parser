@@ -1,4 +1,5 @@
 ## Divergências em relação a especificação formal da linguagem
+- Na AST o PointerAccessExpression aceita apenas strings, mas deveria aceitar expression.
 - Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
 - Parser em ANTLR usa Id em diversos lugares em que deveria utilizar qualifiedName, por exemplo em PointerAccess.
 - Parser em ANTLR suporta(?) acesso de campo para expression, mas é especificado apenas acesso de campo para qualified identifier. O mesmo vale para acesso de lista.
@@ -19,5 +20,7 @@
 - Parser em ANTLR não suporta typeguards.
 
 ## Anotações
+- perguntar para o professor sobre o id do Read(algo) deveria aceitar expressão ?
+- Perguntar a onde o comentario é valido no programa
 - O objeto NullValue herda de Expression, não seria melhor herdar de Value?
 - Decidiu-se que serão feitas algumas extensões a AST para facilitar o desenvolvimento. Idealmente, nenhuma alteração feita quebrará a compatibilidade com o restante da implementação da linguagem.

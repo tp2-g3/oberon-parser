@@ -61,9 +61,8 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail("Expression test 2 failed")
 		}
 
-		val exprTest3 = expressionP.parseString("abc.myarray[5]")
-		println(exprTest3)
-
+		val exprTest3 = expressionP.parseString("a.b.c^")
+		
 		val exprTest4 = expressionP.parseString("1 >= 2")
 		exprTest4 match {
 			case Right("", value) => assert(value == GTEExpression(IntValue(1), IntValue(2)))
@@ -104,19 +103,19 @@ class ParserTestSuite extends munit.FunSuite {
 		val multTest4 = multP.parseString("MOD 6 + 5")
 
 		multTest1 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 1 failed")
 			case Right(str, value) => assert(value == TimesOperator && str == "5")
 		}
 		multTest2 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 2 failed")
 			case Right(str, value) => assert(value == AndOperator && str == "True")
 		}
 		multTest3 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 3 failed")
 			case Right(str, value) => assert(value == SlashOperator && str == "3")
 		}
 		multTest4 match {
-			case Left(_) => fail
+			case Left(_) => fail("Mult test 4 failed")
 			case Right(str, value) => assert(value == ModOperator && str == "6 + 5")
 		}
 	}
@@ -140,4 +139,131 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 3")
 		}
 	}
+	test("Statement Test 1"){
+		statementP.parse("x.y.z :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 2"){
+		statementP.parse("x.y.z := 3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 3"){
+		statementP.parse("z^ :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 4"){
+		statementP.parse("a.z^ :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 5"){
+		statementP.parse("a :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 6"){
+		statementP.parse("z[i+10] :=3") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 7"){
+		statementP.parse("write(x+5)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 8"){
+		statementP.parse("seilaman(x,5)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 9"){
+		statementP.parse("seilaman()") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 10"){
+		statementP.parse("IF 1+3=4 THEN a:=3 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 11"){
+		statementP.parse("IF 1+3=4 THEN a:=3 ELSE a:=1 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 12"){
+		statementP.parse("IF 1+3=a THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSE a:=1 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 13"){
+		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 14"){
+		statementP.parse("IF 1+3=3 THEN a:=3 ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 15"){
+		statementP.parse("IF 1+3=3 THEN IF 1+i=(j-2) THEN a := 1 ; b := 3 ; c := a+b ; write(c) END ELSEIF 1+3=4 THEN a:=2 ELSEIF 1+3=5 THEN a:=5 END") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 16"){
+		statementP.parse("readLongReal(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 17"){
+		statementP.parse("readReal(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 18"){
+		statementP.parse("readLongInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 19"){
+		statementP.parse("readInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 20"){
+		statementP.parse("readChar(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	test("Statement Test 21"){
+		statementP.parse("readShortInt(x)") match {
+			case Left(_) => fail("Statement test failed")
+			case Right(str, _) => assert(str == "")
+		}
+	}
+	
 }
