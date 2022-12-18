@@ -315,9 +315,75 @@ object OberonParser {
 		}
 	}
 
-	def statementP: Parser0[Option[Statement]] = {
-		(ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP | readIntStmtP | readLongIntStmtP | 
-		readRealStmtP | readLongRealStmtP | assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP).?
+	def whileStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("WHILE").token *> expressionP <* Parser.string("DO").token) ~ 
+		sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+		.map((x,y) => WhileStmt(x,y))
+	}
 
+	def repeatStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("REPEAT").token *> sequenceStmtP(stmtRecP) <* Parser.string("UNTIL").token) ~ expressionP)
+		.map((x,y) => RepeatUntilStmt(y,x))
+	}
+
+	def forStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("FOR").token *> sequenceStmtP(stmtRecP) <* Parser.string("TO").token) ~
+		expressionP ~(Parser.string("DO").token *> sequenceStmtP(stmtRecP) <* Parser.string("END").token))
+		.map{case ((x,y),z) => ForStmt(x,y,z)}
+	}
+
+	def forEachStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		((Parser.string("FOREACH").token *> identifierP <* Parser.string("IN").token) ~ expressionP ~ 
+		sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+		.map{case ((x,y),z) => ForEachStmt(x,y,z)}
+	}
+
+	def loopStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		(Parser.string("LOOP").token *> sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+		.map(statement => LoopStmt(statement))
+	} 
+
+	def returnP: Parser[Statement] = {
+		(Parser.string("RETURN").token *> expressionP)
+		.map((expression) => ReturnStmt(expression))
+	}
+
+	def exitP: Parser[Statement] = {
+		(Parser.string("EXIT").token)
+		.map(_ => ExitStmt())
+	}
+
+	def labelP: Parser[Expression] =
+		decIntegerP | quoteStringP | qualifiedNameP.map(VarExpression.apply)
+
+	def caseAlternativeP(stmtRecP: Parser0[Option[Statement]]): Parser[CaseAlternative] = {
+		(
+		(labelP ~ (stringTokenP("..") *> labelP).? <* charTokenP(':')) ~ sequenceStmtP(stmtRecP)
+		)
+		.map {
+			case ((label, None), stmts) => SimpleCase(label, stmts)
+			case ((min, Some(max)), stmts) => RangeCase(min, max, stmts)
+		}
+	}
+
+	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
+		(
+			(expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
+			(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~
+			(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).?)
+			<* stringTokenP("END")
+		)
+		.map {
+			case (expr, (cases, stmt)) => CaseStmt(expr,cases.toList, stmt)
+		}
+	}
+
+	def statementP: Parser0[Option[Statement]] = {
+		(caseStmtP(Parser.defer0(statementP)) | loopStmtP(Parser.defer0(statementP)) |
+		forEachStmtP(Parser.defer0(statementP)) | forStmtP(Parser.defer0(statementP)) |
+		repeatStmtP(Parser.defer0(statementP)) | whileStmtP(Parser.defer0(statementP)) | exitP |
+		returnP | ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP |
+		readIntStmtP | readLongIntStmtP | readRealStmtP |readLongRealStmtP |
+		assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP.backtrack).?
 	}
 }
