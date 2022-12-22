@@ -254,33 +254,33 @@ object OberonParser {
 	}
 	
 	def readCharStmtP: Parser[Statement] = {
-		(Parser.string("readChar") *> identifierP.betweenParen)
-		.map(x => ReadCharStmt(x))
+		(Parser.string("readChar") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadCharStmt(x.toString))
 	}
 
 	def readRealStmtP: Parser[Statement] = {
-		(Parser.string("readReal") *> identifierP.betweenParen)
-		.map(x => ReadRealStmt(x))
+		(Parser.string("readReal") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadRealStmt(x.toString))
 	}
 
 	def readLongRealStmtP: Parser[Statement] = {
-		(Parser.string("readLongReal") *> identifierP.betweenParen)
-		.map(x => ReadLongRealStmt(x))
+		(Parser.string("readLongReal") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadLongRealStmt(x.toString))
 	}
 
 	def readIntStmtP: Parser[Statement] = {
-		(Parser.string("readInt") *> identifierP.betweenParen)
-		.map(x => ReadIntStmt(x))
+		(Parser.string("readInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadIntStmt(x.toString))
 	}
 
 	def readLongIntStmtP: Parser[Statement] = {
-		(Parser.string("readLongInt") *> identifierP.betweenParen)
-		.map(x => ReadLongIntStmt(x))
+		(Parser.string("readLongInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadLongIntStmt(x.toString))
 	}
 
 	def readShortIntStmtP: Parser[Statement] = {
-		(Parser.string("readShortInt") *> identifierP.betweenParen)
-		.map(x => ReadShortIntStmt(x))
+		(Parser.string("readShortInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadShortIntStmt(x.toString))
 	}
 
 	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
@@ -361,16 +361,16 @@ object OberonParser {
 
 	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
 		((Parser.string("CASE").token *> expressionP <* Parser.string("OF").token) ~ 
-		(caseAlternativeP(stmtRecP)).rep0 ~ (stringTokenP("ELSE") *> stmtRecP).? <* Parser.string("END").token)
+		(caseAlternativeP(stmtRecP)).rep0 ~ (Parser0.string("ELSE").token *> stmtRecP).? <* Parser.string("END").token)
 		.map {
-			case ((expr,cases),Some(stmt)) => CaseStmt(expr,cases,stmt)
+			case ((expr,cases),Some(stmt)) => CaseStmt(expr,cases,Some(stmt))
 		}
 	}
 
 	def statementP: Parser0[Option[Statement]] = {
-		(caseStmtP(Parser.defer0(statementP)).backtrack | loopStmtP(Parser.defer0(statementP)).backtrack | forEachStmtP(Parser.defer0(statementP)).backtrack | forStmtP(Parser.defer0(statementP)).backtrack |
-		repeatStmtP(Parser.defer0(statementP)).backtrack | whileStmtP(Parser.defer0(statementP)).backtrack | exitP.backtrack | returnP.backtrack |
-		ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP.backtrack | readCharStmtP.backtrack | readIntStmtP.backtrack | 
+		(caseStmtP(Parser.defer0(statementP)) | loopStmtP(Parser.defer0(statementP)) | forEachStmtP(Parser.defer0(statementP)) | forStmtP(Parser.defer0(statementP)) |
+		repeatStmtP(Parser.defer0(statementP)) | whileStmtP(Parser.defer0(statementP)) | exitP.backtrack | returnP.backtrack |
+		ifStmtP(Parser.defer0(statementP)).backtrack | readShortIntStmtP.backtrack | readCharStmtP.backtrack | readIntStmtP.backtrack | 
 		readLongIntStmtP.backtrack | readRealStmtP.backtrack |readLongRealStmtP.backtrack | assignmentStmtP.backtrack |
 		 writeStmtP.backtrack | procedureCallStmtP.backtrack).?
 	}
