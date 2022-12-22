@@ -387,8 +387,22 @@ class ParserTestSuite extends munit.FunSuite {
 			case Right(_,_) => fail("Statement test failed")
 		}
 	}
-	test("Sono statement"){
-		import cats.parse.{Parser, Parser0}
-		println(caseAlternativeP(Parser.defer0(statementP)).parse("1: x:=10"))
+	test("Case statement"){
+		val result1 = Some(
+			CaseStmt
+			(
+				VarExpression("xs"), 
+				List(RangeCase(IntValue(1), IntValue(20),
+				SequenceStmt(List(AssignmentStmt(VarAssignment("x"), IntValue(10))))),
+				SimpleCase(IntValue(2), 
+				SequenceStmt(List(AssignmentStmt(VarAssignment("x"), IntValue(20)))))),
+				Some(SequenceStmt(List(AssignmentStmt(VarAssignment("x"), IntValue(0)))))
+			)
+		)
+
+		statementP.parse("CASE xs OF 1..20: x:= 10 | 2: x:= 20 ELSE x:= 0 END") match {
+			case Right("", result) => assert(result == result1)
+			case _ => fail("Case statement test 1 failed.")
+		}
 	}
 }
