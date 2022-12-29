@@ -244,6 +244,11 @@ object OberonParser {
 		.map(x => WriteStmt(x))
 	}
 
+	def designatorHelperToString(x : DesignatorHelper): String = x match {
+		case DesignatorHelper(name, Nil) => name 
+		case DesignatorHelper(name, selectors) => name + selectors.toString
+	}
+
 	def procedureCallStmtP: Parser[Statement] = {
 		(qualifiedNameP ~ (exprListP(expressionP).?).between(charTokenP('('), charTokenP(')')))
 		.map{ (x,y) => (x,y) match { 
@@ -255,32 +260,32 @@ object OberonParser {
 	
 	def readCharStmtP: Parser[Statement] = {
 		(Parser.string("readChar") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadCharStmt(x.toString))
+		.map(x => ReadCharStmt(designatorHelperToString(x)))
 	}
 
 	def readRealStmtP: Parser[Statement] = {
 		(Parser.string("readReal") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadRealStmt(x.toString))
+		.map(x => ReadRealStmt(designatorHelperToString(x)))
 	}
 
 	def readLongRealStmtP: Parser[Statement] = {
 		(Parser.string("readLongReal") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadLongRealStmt(x.toString))
+		.map(x => ReadLongRealStmt(designatorHelperToString(x)))
 	}
 
 	def readIntStmtP: Parser[Statement] = {
 		(Parser.string("readInt") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadIntStmt(x.toString))
+		.map(x => ReadIntStmt(designatorHelperToString(x)))
 	}
 
 	def readLongIntStmtP: Parser[Statement] = {
 		(Parser.string("readLongInt") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadLongIntStmt(x.toString))
+		.map(x => ReadLongIntStmt(designatorHelperToString(x)))
 	}
 
 	def readShortIntStmtP: Parser[Statement] = {
 		(Parser.string("readShortInt") *> designatorP(expressionP).betweenParen)
-		.map(x => ReadShortIntStmt(x.toString))
+		.map(x => ReadShortIntStmt(designatorHelperToString(x)))
 	}
 
 	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
