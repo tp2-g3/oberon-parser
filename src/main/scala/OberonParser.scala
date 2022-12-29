@@ -247,6 +247,11 @@ object OberonParser {
 		.map(x => WriteStmt(x))
 	}
 
+	def designatorHelperToString(x : DesignatorHelper): String = x match {
+		case DesignatorHelper(name, Nil) => name 
+		case DesignatorHelper(name, selectors) => name + selectors.toString
+	}
+
 	def procedureCallStmtP: Parser[Statement] = {
 		(qualifiedNameP ~ (exprListP(expressionP).?).between(charTokenP('('), charTokenP(')')))
 		.map{ (x,y) => (x,y) match { 
@@ -257,33 +262,33 @@ object OberonParser {
 	}
 	
 	def readCharStmtP: Parser[Statement] = {
-		(Parser.string("readChar") *> identifierP.betweenParen)
-		.map(x => ReadCharStmt(x))
+		(Parser.string("readChar") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadCharStmt(designatorHelperToString(x)))
 	}
 
 	def readRealStmtP: Parser[Statement] = {
-		(Parser.string("readReal") *> identifierP.betweenParen)
-		.map(x => ReadRealStmt(x))
+		(Parser.string("readReal") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadRealStmt(designatorHelperToString(x)))
 	}
 
 	def readLongRealStmtP: Parser[Statement] = {
-		(Parser.string("readLongReal") *> identifierP.betweenParen)
-		.map(x => ReadLongRealStmt(x))
+		(Parser.string("readLongReal") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadLongRealStmt(designatorHelperToString(x)))
 	}
 
 	def readIntStmtP: Parser[Statement] = {
-		(Parser.string("readInt") *> identifierP.betweenParen)
-		.map(x => ReadIntStmt(x))
+		(Parser.string("readInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadIntStmt(designatorHelperToString(x)))
 	}
 
 	def readLongIntStmtP: Parser[Statement] = {
-		(Parser.string("readLongInt") *> identifierP.betweenParen)
-		.map(x => ReadLongIntStmt(x))
+		(Parser.string("readLongInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadLongIntStmt(designatorHelperToString(x)))
 	}
 
 	def readShortIntStmtP: Parser[Statement] = {
-		(Parser.string("readShortInt") *> identifierP.betweenParen)
-		.map(x => ReadShortIntStmt(x))
+		(Parser.string("readShortInt") *> designatorP(expressionP).betweenParen)
+		.map(x => ReadShortIntStmt(designatorHelperToString(x)))
 	}
 
 	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
