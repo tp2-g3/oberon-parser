@@ -43,7 +43,7 @@ case class ParameterByReference(name: String, argumentType: Type) extends Formal
 
 
   /* Imports */
-case class Import(name: String)
+case class Import(name: String) // não usado pelo g4
 
 /* Constant definition */
 case class Constant(name: String, exp: Expression)
@@ -148,11 +148,11 @@ case class ComplexFunctionCallExpression(exp: Expression, args: List[Expression]
 
 
 case object NullValue extends Expression
-case class Location(loc: Int) extends Expression
-case class Brackets(exp: Expression) extends Expression
-case class ArrayValue(value: ListBuffer[Expression], arrayType: ArrayType) extends Value { type T = ListBuffer[Expression] }
+case class Location(loc: Int) extends Expression //não usado pelo g4
+case class Brackets(exp: Expression) extends Expression // não implementamos ? perguntar para o eduardo
+case class ArrayValue(value: ListBuffer[Expression], arrayType: ArrayType) extends Value { type T = ListBuffer[Expression] } //não usado pelo g4
 case class ArraySubscript(arrayBase: Expression, index: Expression) extends Expression
-case class Undef() extends Expression
+case class Undef() extends Expression //não usado pelo g4
 case class FieldAccessExpression(exp: Expression, name: String) extends Expression
 case class VarExpression(name: String) extends Expression
 case class EQExpression(left:  Expression, right: Expression) extends Expression
@@ -233,7 +233,7 @@ case class LoopStmt(stmt: Statement) extends Statement
 case class ReturnStmt(exp: Expression) extends Statement
 case class CaseStmt(exp: Expression, cases: List[CaseAlternative], elseStmt: Option[Statement]) extends Statement
 case class ExitStmt() extends Statement
-case class MetaStmt(f: () => Statement) extends Statement
+case class MetaStmt(f: () => Statement) extends Statement // não usado pelo g4
 
 trait CaseAlternative
 case class SimpleCase(condition: Expression, stmt: Statement) extends CaseAlternative
@@ -270,9 +270,9 @@ case object RealType extends Type
 case object BooleanType extends Type
 case object CharacterType extends Type
 case object StringType extends Type
-case object UndefinedType extends Type
+case object UndefinedType extends Type // não usado pelo g4
 case object NullType extends Type
-case object LocationType extends Type
+case object LocationType extends Type // não usado pelo g4
 
 case class RecordType(variables: List[VariableDeclaration]) extends Type
 case class ArrayType(length: Int, baseType: Type) extends Type

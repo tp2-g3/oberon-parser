@@ -250,7 +250,7 @@ object OberonParser {
 	}
 
 	def procedureCallStmtP: Parser[Statement] = {
-		(qualifiedNameP ~ (exprListP(expressionP).?).between(charTokenP('('), charTokenP(')')))
+		(qualifiedNameP ~ exprListP(expressionP).?.between(charTokenP('('), charTokenP(')')))
 		.map{ (x,y) => (x,y) match { 
 				case (x,None) => ProcedureCallStmt(x,Nil)
 				case (x,Some(listinha)) => ProcedureCallStmt(x,listinha)
@@ -388,4 +388,89 @@ object OberonParser {
 		readIntStmtP | readLongIntStmtP | readRealStmtP |readLongRealStmtP |
 		assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP.backtrack).?
 	}
+
+	def userTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] = {
+		arrayTypeP(oberonTypeRecP) | recordTypeP(oberonTypeRecP) | pointerTypeP(oberonTypeRecP)
+	}
+	
+	def pointerTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] = {
+		(Parser.string("POINTER").token *> (Parser.string("TO").token *> oberonTypeRecP))
+		.map (x => PointerType(x))
+	}
+
+	def recordTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] = {
+		(Parser.string("RECORD").token *> varDeclarationP(oberonTypeRecP).rep0 <* Parser.string("END").token)
+		.map(x => RecordType(x))
+	}
+
+	// perguntar depois se lenght precisa ser negativa ?
+	def arrayTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] = {
+		((Parser.string("ARRAY").token *> unsignedDecIntegerP.token <* Parser.string("OF").token) ~ oberonTypeRecP)
+		.map{case (IntValue(x),y) => ArrayType(x,y)}
+	}
+
+	def varDeclarationP(oberonTypeRecP: Parser[Type]): Parser[VariableDeclaration] = {
+		(qualifiedNameP ~ (Parser.string(",").token *> qualifiedNameP).rep0 ~ 
+		(Parser.string(":").token *> oberonTypeRecP <* Parser.string(";").token))
+		.map { case ((x,y),z) => VariableDeclaration(x+y.toString,z)}
+	}
+
+	def oberonTypeP: Parser[Type] = {
+		Parser.string("INTEGER").token.map(_ => IntegerType) | Parser.string("REAL").token.map(_ => RealType) | 
+		Parser.string("CHAR").token.map(_ => CharacterType) | Parser.string("BOOLEAN").token.map(_ => BooleanType) | 
+		Parser.string("STRING").token.map(_ => StringType) | nullP.map(_ => NullType) | 
+		userTypeP(Parser.defer(oberonTypeP)) | qualifiedNameP.map(name => ReferenceToUserDefinedType(name))
+	}
+
+	//produce
+
+	// def procedureP: Parser[Procedure] = {
+	// 	((Parser.string("PROCEDURE").token *> qualifiedNameP) ~ 
+	// 	(formalArgP ~ (Parser.string(",").token *> formalArgP).rep0).?.between(charTokenP('('), charTokenP(')')) ~ 
+	// 	((Parser.string(":").token *> oberonTypeP).? <* Parser.string(";").token) ~
+	// 	(Parser.string("CONST").token *> constantP.rep0).? ~ (Parser.string("VAR").token *> varDeclarationP.rep0).? ~
+	// 	(Parser.string("BEGIN") *> sequenceStmtP(statementP) <* Parser.string("END").token) ~ qualifiedNameP.void)
+	// 	.map{
+	// 		case ((((((id,Some(head,tail)),tipo),Some(listConst)),Some(listVar)),stmt),_) => 
+	// 			Procedure(id,(List(head) ++ tail),tipo,listConst,listVar,stmt)
+	// 	}
+	// }
+
+	// def constantP: Parser[Constant] = {
+	// 	(qualifiedNameP ~ (Parser.string("=").token *> expressionP <* Parser.string(";").token))
+	// 	.map((x,y) => Constant(x,y))
+	// }
+
+	// def formalArgP: Parser[FormalArg] = {
+	// 	parameterByReferenceP | parameterByValueP
+	// }
+
+	// def parameterByReferenceP: Parser[FormalArg] = {
+	// 	(Parser.string("VAR").token *> qualifiedNameP ~ (Parser.string(",").token *> 
+	// 	(Parser.string("VAR").token *> qualifiedNameP)).rep0 ~ (Parser.string(":").token *> oberonTypeP))
+	// 	.map{case ((x,y),z) => ParameterByReference(x+y.toString,z)}
+	// }
+
+	// def parameterByValueP: Parser[FormalArg] = {
+	// 	(qualifiedNameP ~ (Parser.string(",").token *> qualifiedNameP).rep0 ~ (Parser.string(":").token *> oberonTypeP))
+	// 	.map{case ((x,y),z) => ParameterByValue(x+y.toString,z)}
+	// }
+
+	// module
+
+	// perguntar se o correto seria ser oberonType ou userType igual especificado em g4
+	// def userTypeDeclarationP: Parser[UserDefinedType] = {
+	// 	((qualifiedNameP <* Parser.string("=").token) ~ userTypeP)
+	// 	.map((x,y) => UserDefinedType(x,y))
+	// }
+
+	// colocar na geladeira por enquanto
+	// def importP: Parser[Import] = {
+	// 	(Parser.string("IMPORT").token *> helperImportP ~ (Parser.string(",") *> helperImportP).rep0 <* Parser.string(";").token)
+	// 	.map(x => ReadCharStmt(x))
+	// }
+
+	// def helperImportP: Parser[(String, Option[String])] = {
+	// 	identifierP ~ (Parser.string(":=").token *> identifierP ).?
+	// }
 }
