@@ -1,4 +1,5 @@
 ## Divergências em relação a especificação formal da linguagem
+- Nome no fim da declaração de procedure não é usado.
 - Na AST o PointerAccessExpression aceita apenas strings, mas deveria aceitar expression.
 - Parser em ANTLR suporta apenas literais de caracteres que correspondem a letras (por exemplo 'a' é suportado mas '7' não é).
 - Parser em ANTLR usa Id em diversos lugares em que deveria utilizar qualifiedName, por exemplo em PointerAccess.
