@@ -1,6 +1,6 @@
 package oberonParser
 
-import cats.parse.Rfc5234.{sp, alpha, digit, char}
+import cats.parse.Rfc5234.{alpha, digit, char}
 import cats.parse.{Parser, Parser0}
 import cats.data.NonEmptyList
 import oberonAST.*
@@ -12,8 +12,10 @@ object ParserSyntax {
 		val whitespaceP: Parser[Unit] = Parser.charIn(" \r\t\n").void
 		val whitespacesP: Parser[Unit] = whitespaceP.rep.void
 
-		val commentP: Parser[Unit] = Parser.string("/*") *> 
-			Parser.repUntil0(Parser.anyChar, Parser.string("*/").void).void
+		val commentP: Parser[Unit] = 
+			Parser.string("/*") *> 
+			Parser.anyChar.repUntil0(Parser.string("*/")).void <*
+			Parser.string("*/")
 
 		val junkP: Parser0[Unit] = (whitespacesP | commentP).rep0.void
 
@@ -40,6 +42,7 @@ object OberonParser {
 
 	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
 	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
+
 
 	val identifierP: Parser[String] = 
 		(alpha ~ (alpha | digit).rep0)
@@ -228,7 +231,7 @@ object OberonParser {
 
 	def expressionP: Parser[Expression] = Parser.recursive { exprRecP =>
 		(simpleExpressionP(exprRecP) ~ (relationP ~ simpleExpressionP(exprRecP)).?)
-		.map { (expr1, optionExpr2) =>
+		.map { (expr1: Expression, optionExpr2: Option[(RelationOperator, Expression)]) =>
 			optionExpr2 match {
 				case None => expr1
 				case Some((EQOperator, expr2)) => EQExpression(expr1, expr2)
