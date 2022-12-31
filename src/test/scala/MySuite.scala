@@ -405,8 +405,11 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail("Case statement test 1 failed.")
 		}
 	}
-	test("new test"){
-		println(oberonTypeP.parse("ARRAY 9 OF ARRAY 10 OF REAL"))
-		println(procedureP.parseString("PROCEDURE sum(v1, v2 : INTEGER) : INTEGER; BEGIN RETURN v1 + v2 END sum"))
+	test("new test's"){
+		println(oberonTypeP.parseString("ARRAY 9 OF ARRAY 10 OF REAL"))
+		println(procedureP.parseString("PROCEDURE sum(v1, v2, v5, v6 : UserType,v3, v4 : ARRAY 9 OF ARRAY 10 OF REAL) : INTEGER; BEGIN RETURN v1 + v2 END sum"))
+		println(procedureP.parseString("PROCEDURE sum() : INTEGER; CONST v = 1+4; c = v+4; VAR z1,z2 : INTEGER; z3,z4 : REAL; BEGIN RETURN v1 + v2 END sum"))
+		println(procedureP.parseString("PROCEDURE sum() ; BEGIN REPEAT IF 2*c = x THEN readInt(x) ; x := 10 ; c := 2*x END UNTIL i+1 = j END sum"))
+		println(procedureP.parseString("PROCEDURE factorial(i: INTEGER) : INTEGER; BEGIN IF(i = 1) THEN RETURN 1 END; RETURN i * factorial(i - 1) END factorial"))
 	}
 }
