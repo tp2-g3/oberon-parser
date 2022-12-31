@@ -348,21 +348,16 @@ object OberonParser {
 		decIntegerP | quoteStringP | qualifiedNameP.map(VarExpression.apply)
 
 	def caseAlternativeP(stmtRecP: Parser0[Option[Statement]]): Parser[CaseAlternative] =
-		(
-		(labelP ~ (stringTokenP("..") *> labelP).? <* charTokenP(':')) ~ sequenceStmtP(stmtRecP)
-		)
+		((labelP ~ (stringTokenP("..") *> labelP).? <* charTokenP(':')) ~ sequenceStmtP(stmtRecP))
 		.map {
 			case ((label, None), stmts) => SimpleCase(label, stmts)
 			case ((min, Some(max)), stmts) => RangeCase(min, max, stmts)
 		}
 
 	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
-		(
-			(expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
-			(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~
-			(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).?)
-			<* stringTokenP("END")
-		)
+		((expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
+		(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~
+		(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).?) <* stringTokenP("END"))
 		.map {
 			case (expr, (cases, stmt)) => CaseStmt(expr,cases.toList, stmt)
 		}
@@ -412,8 +407,10 @@ object OberonParser {
 		((stringTokenP("PROCEDURE") *> identifierDefP) ~ formalsP ~ 
 		((stringTokenP(":") *> oberonTypeP).? <* stringTokenP(";")) ~ 
 		(stringTokenP("CONST") *> constantP.rep0).? ~ (stringTokenP("VAR") *> varDeclarationP(oberonTypeP).rep0).? ~
-		(stringTokenP("BEGIN") *> sequenceStmtP(statementP) <* stringTokenP("END")) <* qualifiedNameP.void)
-		.map{ case ((((((id,option1),tipo),option2),option3),stmt)) => {
+		(stringTokenP("BEGIN") *> sequenceStmtP(statementP) <* stringTokenP("END")) ~ identifierP)
+		.map{ case (((((((id,option1),tipo),option2),option3),stmt),endId)) => {
+				if(id != endId) 
+					throw new Exception(s"Procedure name ($id) doesn't match the end identifier ($endId)")
 				val args = option1 match {
 					case Some(head,tail) => (head :: tail)
 					case None => Nil
@@ -455,20 +452,55 @@ object OberonParser {
 			} 
 			ParameterByValue(ids,z)
 		}
+	
+	def importP: Parser[(String, Option[String])] = identifierP ~ (stringTokenP(":=") *> identifierP ).?
 
+	def importListP: Parser[Set[String]] = 
+		(stringTokenP("IMPORT") *> importP ~ (stringTokenP(",") *> importP).rep0 <* stringTokenP(";"))
+		.map{ case (head,tail) => {
+				(head::tail).foldLeft(Set()) {
+					case (total,(head1,Some(head2))) => total.++(Set(head1+":="+head2))
+					case (total,(head1,None)) => total.++(Set(head1))
+				}
+			}
+		}
+	
+	// Ultima pergunta para o professor // LEMBRARRRRRRR //
 	// perguntar se o correto seria ser oberonType ou userType igual especificado em g4
-	// def userTypeDeclarationP: Parser[UserDefinedType] = {
-	// 	((qualifiedNameP <* stringTokenP("=")) ~ userTypeP)
-	// 	.map((x,y) => UserDefinedType(x,y))
-	// }
+	def userTypeDeclarationP: Parser[UserDefinedType] = {
+		((identifierDefP <* stringTokenP("=")) ~ userTypeP(oberonTypeP))
+		.map((x,y) => UserDefinedType(x,y))
+	}
 
-	// colocar na geladeira por enquanto
-	// def importP: Parser[Import] = {
-	// 	(stringTokenP("IMPORT") *> helperImportP ~ (stringTokenP(",") *> helperImportP).rep0 <* stringTokenP(";"))
-	// 	.map(x => ReadCharStmt(x))
-	// }
-
-	// def helperImportP: Parser[(String, Option[String])] = {
-	// 	identifierP ~ (stringTokenP(":=") *> identifierP ).?
-	// }
+	def oberonModuleP: Parser[OberonModule] = 
+		((stringTokenP("MODULE") *> identifierP <* stringTokenP(";")) ~ importListP.? ~
+		(stringTokenP("TYPE") *> userTypeDeclarationP.rep0).? ~ (stringTokenP("CONST") *> constantP.rep0).? ~ 
+		(stringTokenP("VAR") *> varDeclarationP(oberonTypeP).rep0).? ~ procedureP.rep0.? ~
+		(stringTokenP("BEGIN") *> sequenceStmtP(statementP) <* stringTokenP("END")).? ~ 
+		(stringTokenP("END") *> identifierP <* stringTokenP(".")))
+		.map { case (((((((id,option1),option2),option3),option4),option5),stmt),endId) => 
+			if(id != endId) 
+				throw new Exception(s"Module name ($id) doesn't match the end identifier ($endId)")
+			val setModules = option1 match {
+				case Some(set) => set
+				case None => Set()
+			}
+			val listUserType = option2 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listConst = option3 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listVarDeclaration = option4 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listProcedure = option5 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			OberonModule(id,setModules,listUserType,listConst,listVarDeclaration,listProcedure,stmt)
+		}
 }
