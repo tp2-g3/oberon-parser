@@ -139,6 +139,46 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 3")
 		}
 	}
+
+	test("relationP test") {
+		val relationTest1 = relationP.parseString("= 5")
+		val relationTest2 = relationP.parseString("# something")
+		val relationTest3 = relationP.parseString("<= 2")
+		val relationTest4 = relationP.parseString("< 4")
+		val relationTest5 = relationP.parseString(">= 1")
+		val relationTest6 = relationP.parseString("> 10")
+
+		relationTest1 match {
+			case Right(str, value) => assert(value == EQOperator && str == "5")
+			case Left(_) => fail("Failed to parse add test 1")
+		}
+
+		relationTest2 match {
+			case Right(str, value) => assert(value == NEQOperator && str == "something")
+			case Left(_) => fail("Failed to parse add test 2")
+		}
+
+		relationTest3 match {
+			case Right(str, value) => assert(value == LTEOperator && str == "2")
+			case Left(_) => fail("Failed to parse add test 3")
+		}
+
+		relationTest4 match {
+			case Right(str, value) => assert(value == LTOperator && str == "4")
+			case Left(_) => fail("Failed to parse add test 4")
+		}
+
+		relationTest5 match {
+			case Right(str, value) => assert(value == GTEOperator && str == "1")
+			case Left(_) => fail("Failed to parse add test 5")
+		}
+
+		relationTest6 match {
+			case Right(str, value) => assert(value == GTOperator && str == "10")
+			case Left(_) => fail("Failed to parse add test 6")
+		}
+	}
+
 	test("Statement Test Assignment"){
 		val test1 = statementP.parse("x.y.z := 3") 
 		val test2 = statementP.parse("z^ :=3")
