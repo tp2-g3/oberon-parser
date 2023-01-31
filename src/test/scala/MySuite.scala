@@ -194,6 +194,39 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("realP test") {
+		val realTest1 = realP.parseString("+3.14")
+		val realTest2 = realP.parseString("-2.718")
+		val realTest3 = realP.parseString("0.0")
+		val realTest4 = realP.parseString("1.234")
+		val realTest5 = realP.parseString("-0.5")
+
+		realTest1 match {
+			case Right(str, value) => assert(value == RealValue(3.14) && str == "")
+			case Left(_) => fail("Failed to parse real test 1")
+		}
+
+		realTest2 match {
+			case Right(str, value) => assert(value == RealValue(-2.718) && str == "")
+			case Left(_) => fail("Failed to parse real test 2")
+		}
+
+		realTest3 match {
+			case Right(str, value) => assert(value == RealValue(0.0) && str == "")
+			case Left(_) => fail("Failed to parse real test 3")
+		}
+
+		realTest4 match {
+			case Right(str, value) => assert(value == RealValue(1.234) && str == "")
+			case Left(_) => fail("Failed to parse real test 4")
+		}
+
+		realTest5 match {
+			case Right(str, value) => assert(value == RealValue(-0.5) && str == "")
+			case Left(_) => fail("Failed to parse real test 5")
+		}
+	}
+
 	test("Statement Test Assignment"){
 		val test1 = statementP.parse("x.y.z := 3") 
 		val test2 = statementP.parse("z^ :=3")
