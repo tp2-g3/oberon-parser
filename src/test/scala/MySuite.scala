@@ -445,4 +445,92 @@ class ParserTestSuite extends munit.FunSuite {
 			case _ => fail("Case statement test 1 failed.")
 		}
 	}
+	test("Module tests") {
+		val module1 = oberonModuleP.parseString("""
+		MODULE SimpleModule;
+
+		VAR
+		x : INTEGER;
+		y : INTEGER;
+		
+		BEGIN
+		x := 5;
+		y := 100;
+		WHILE(x < y) DO
+		x := x * x
+		END;
+		write(x)
+		END
+
+		END SimpleModule.
+		""")
+
+		module1 match {
+			case Right("", parsed) => assertEquals(parsed,
+			OberonModule("SimpleModule",Set(),List(),List(),List(VariableDeclaration("x",IntegerType),
+			 VariableDeclaration("y",IntegerType)),List(),Some(SequenceStmt(List(AssignmentStmt(VarAssignment("x")
+			 ,IntValue(5)), AssignmentStmt(VarAssignment("y"),IntValue(100)), 
+			 WhileStmt(LTExpression(VarExpression("x"),VarExpression("y")),
+			 SequenceStmt(List(AssignmentStmt(VarAssignment("x"),MultExpression(VarExpression("x"),
+			 VarExpression("x")))))), WriteStmt(VarExpression("x")))))))
+			case _ => fail("Module 1 parsed incorrectly.")
+		}
+
+		val module2 = oberonModuleP.parseString("""
+		MODULE bee1013;
+
+		VAR
+			a: INTEGER;
+			b: INTEGER;
+			c: INTEGER;
+			answer: INTEGER;
+
+		PROCEDURE abs(a : INTEGER) : INTEGER;
+			BEGIN
+				IF (a < 0) THEN
+					a := a * (-1)
+				END;
+				RETURN a
+			END abs
+
+		PROCEDURE maxValue(a, b : INTEGER) : INTEGER;
+			BEGIN
+				RETURN (a + b + abs(a - b)) /2
+			END maxValue
+
+		BEGIN
+			a:= 7;
+			b:= 14;
+			c:= 106;
+
+			answer := maxValue(maxValue(a, b), c)
+
+		END
+
+		END bee1013.
+		""")
+
+
+		module2 match {
+			case Right("", parsed) => assertEquals(parsed,
+			OberonModule("bee1013",Set(),List(),List(),List(VariableDeclaration("a",IntegerType),
+			 VariableDeclaration("b",IntegerType), VariableDeclaration("c",IntegerType),
+			  VariableDeclaration("answer",IntegerType)),List(Procedure("abs",
+			  List(ParameterByValue("a",IntegerType)),Some(IntegerType),List(),List(),
+			  SequenceStmt(List(IfElseStmt(LTExpression(VarExpression("a"),IntValue(0)),
+			  SequenceStmt(List(AssignmentStmt(VarAssignment("a"),MultExpression(VarExpression("a"),IntValue(-1))))),
+			  None), ReturnStmt(VarExpression("a"))))), Procedure("maxValue",List(ParameterByValue("a",
+			  IntegerType), ParameterByValue("b",IntegerType)),Some(IntegerType),List(),List(),
+			  SequenceStmt(List(ReturnStmt(DivExpression(AddExpression(AddExpression(VarExpression("a"),
+			  VarExpression("b")),FunctionCallExpression("abs",List(SubExpression(VarExpression("a"),
+			  VarExpression("b"))))),IntValue(2))))))),Some(SequenceStmt(List(AssignmentStmt
+			  (VarAssignment("a"),IntValue(7)), AssignmentStmt(VarAssignment("b"),IntValue(14)),
+			   AssignmentStmt(VarAssignment("c"),IntValue(106)), AssignmentStmt
+			   (VarAssignment("answer"),FunctionCallExpression("maxValue",
+			   List(FunctionCallExpression("maxValue",List(VarExpression("a"),
+			VarExpression("b"))), VarExpression("c"))))))))
+			)
+			case _ => fail("Module 2 parsed incorrectly")
+		}
+	}
 }

@@ -28,6 +28,13 @@ object ParserSyntax {
 		def betweenParen: Parser[A] = p.between(charTokenP('('), charTokenP(')')) 
 		def betweenBrackets: Parser[A] = p.between(charTokenP('['), charTokenP(']')) 
 	}
+
+	implicit class Parser0Ops[A](p: Parser0[A]) {
+		import OberonParser.*
+
+		def betweenParen: Parser0[A] = p.between(charTokenP('('), charTokenP(')')) 
+		def betweenBrackets: Parser0[A] = p.between(charTokenP('['), charTokenP(']')) 
+	}
 }
 
 object OberonParser {
@@ -43,11 +50,11 @@ object OberonParser {
 		.map(s => s.mkString).token
 
 	val identifierDefP: Parser[String] = 
-		(identifierP ~ (Parser.char('*').map(x => "*") | Parser.pure("")))
+		(identifierP ~ (charTokenP('*').map(x => "*") | Parser.pure("")))
 		.map((ident, x) => ident + x).token
 
 	val qualifiedNameHelperP: Parser[String] =
-		(identifierP <* Parser.string("::").token).map(a => a + "::").backtrack
+		(identifierP <* stringTokenP("::")).map(a => a + "::").backtrack
 
 	val qualifiedNameP: Parser[String] = 
 		((qualifiedNameHelperP.backtrack | Parser.pure("")).with1 ~ identifierP)
@@ -93,11 +100,11 @@ object OberonParser {
 
 	def quoteStringP: Parser[StringValue] =
 		Parser.charsWhile(x => x != '"')
-		.surroundedBy(Parser.char('"'))
+		.surroundedBy(charTokenP('"'))
 		.map(StringValue.apply).token
 
 	def charP: Parser[CharValue] = 
-		alpha.surroundedBy(Parser.char('\''))
+		alpha.surroundedBy(charTokenP('\''))
 		.map(CharValue.apply).token
 
 	def boolP: Parser[BoolValue] =
@@ -237,64 +244,55 @@ object OberonParser {
 		}
 	}
 
-	def assignmentStmtP: Parser[Statement] = {
-		((designatorP(expressionP) <* Parser.string(":=").token) ~ expressionP)
+	def assignmentStmtP: Parser[Statement] =
+		((designatorP(expressionP) <* stringTokenP(":=")) ~ expressionP)
 		.map((a, b) =>  AssignmentStmt(designatorHelperToDesignator(a),b))
-	}
 	
-	def writeStmtP: Parser[Statement] = {
-		(Parser.string("write") *> expressionP)
+	def writeStmtP: Parser[Statement] =
+		(stringTokenP("write") *> expressionP)
 		.map(x => WriteStmt(x))
-	}
 
 	def designatorHelperToString(x : DesignatorHelper): String = x match {
 		case DesignatorHelper(name, Nil) => name 
 		case DesignatorHelper(name, selectors) => name + selectors.toString
 	}
 
-	def procedureCallStmtP: Parser[Statement] = {
-		(qualifiedNameP ~ (exprListP(expressionP).?).between(charTokenP('('), charTokenP(')')))
+	def procedureCallStmtP: Parser[Statement] =
+		(qualifiedNameP ~ exprListP(expressionP).?.betweenParen)
 		.map{ (x,y) => (x,y) match { 
 				case (x,None) => ProcedureCallStmt(x,Nil)
 				case (x,Some(listinha)) => ProcedureCallStmt(x,listinha)
 			}
 		}
-	}
 	
-	def readCharStmtP: Parser[Statement] = {
-		(Parser.string("readChar") *> designatorP(expressionP).betweenParen)
+	def readCharStmtP: Parser[Statement] =
+		(stringTokenP("readChar") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadCharStmt(designatorHelperToString(x)))
-	}
 
-	def readRealStmtP: Parser[Statement] = {
-		(Parser.string("readReal") *> designatorP(expressionP).betweenParen)
+	def readRealStmtP: Parser[Statement] =
+		(stringTokenP("readReal") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadRealStmt(designatorHelperToString(x)))
-	}
 
-	def readLongRealStmtP: Parser[Statement] = {
-		(Parser.string("readLongReal") *> designatorP(expressionP).betweenParen)
+	def readLongRealStmtP: Parser[Statement] =
+		(stringTokenP("readLongReal") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadLongRealStmt(designatorHelperToString(x)))
-	}
 
-	def readIntStmtP: Parser[Statement] = {
-		(Parser.string("readInt") *> designatorP(expressionP).betweenParen)
+	def readIntStmtP: Parser[Statement] =
+		(stringTokenP("readInt") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadIntStmt(designatorHelperToString(x)))
-	}
 
-	def readLongIntStmtP: Parser[Statement] = {
-		(Parser.string("readLongInt") *> designatorP(expressionP).betweenParen)
+	def readLongIntStmtP: Parser[Statement] =
+		(stringTokenP("readLongInt") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadLongIntStmt(designatorHelperToString(x)))
-	}
 
-	def readShortIntStmtP: Parser[Statement] = {
-		(Parser.string("readShortInt") *> designatorP(expressionP).betweenParen)
+	def readShortIntStmtP: Parser[Statement] =
+		(stringTokenP("readShortInt") *> designatorP(expressionP).betweenParen)
 		.map(x => ReadShortIntStmt(designatorHelperToString(x)))
-	}
 
-	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("IF").token *> expressionP <* Parser.string("THEN").token) ~ sequenceStmtP(stmtRecP) ~ 
-		((Parser.string("ELSEIF").token *> expressionP <* Parser.string("THEN").token) ~ sequenceStmtP(stmtRecP)).rep0 ~ 
-		(Parser.string("ELSE").token *> sequenceStmtP(stmtRecP)).? <* Parser.string("END").token)
+	def ifStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((stringTokenP("IF") *> expressionP <* stringTokenP("THEN")) ~ sequenceStmtP(stmtRecP) ~ 
+		((stringTokenP("ELSEIF") *> expressionP <* stringTokenP("THEN")) ~ sequenceStmtP(stmtRecP)).rep0 ~ 
+		(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).? <* stringTokenP("END"))
 		.map{ 
 			case (((expr,statement1),(head1,head2)::listElseIf),statement2) => {
 				val foldedList = listElseIf.foldLeft(List(ElseIfStmt(head1,head2))){ 
@@ -304,10 +302,9 @@ object OberonParser {
 			}
 			case((((expr,statement1),Nil),statement2)) => IfElseStmt(expr,statement1,statement2)
 		}
-	}
 
-	def sequenceStmtP(stmtRecP: Parser0[Option[Statement]]): Parser0[Statement] = {
-		(stmtRecP ~ (Parser.string(";").token *> stmtRecP).rep0)
+	def sequenceStmtP(stmtRecP: Parser0[Option[Statement]]): Parser0[Statement] =
+		(stmtRecP ~ (stringTokenP(";") *> stmtRecP).rep0)
 		.map {
 			case(Some(stmt),listStmt) => {
 				val foldedList = listStmt.foldLeft(List(stmt)){
@@ -318,77 +315,188 @@ object OberonParser {
 			}
 			case(None,_) => SequenceStmt(Nil)
 		}
-	}
 
-	def whileStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("WHILE").token *> expressionP <* Parser.string("DO").token) ~ 
-		sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+	def whileStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((stringTokenP("WHILE") *> expressionP <* stringTokenP("DO")) ~ 
+		sequenceStmtP(stmtRecP) <* stringTokenP("END"))
 		.map((x,y) => WhileStmt(x,y))
-	}
 
-	def repeatStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("REPEAT").token *> sequenceStmtP(stmtRecP) <* Parser.string("UNTIL").token) ~ expressionP)
+	def repeatStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((stringTokenP("REPEAT") *> sequenceStmtP(stmtRecP) <* stringTokenP("UNTIL")) ~ expressionP)
 		.map((x,y) => RepeatUntilStmt(y,x))
-	}
 
-	def forStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("FOR").token *> sequenceStmtP(stmtRecP) <* Parser.string("TO").token) ~
-		expressionP ~(Parser.string("DO").token *> sequenceStmtP(stmtRecP) <* Parser.string("END").token))
+	def forStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((stringTokenP("FOR") *> sequenceStmtP(stmtRecP) <* stringTokenP("TO")) ~
+		expressionP ~(stringTokenP("DO") *> sequenceStmtP(stmtRecP) <* stringTokenP("END")))
 		.map{case ((x,y),z) => ForStmt(x,y,z)}
-	}
 
-	def forEachStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		((Parser.string("FOREACH").token *> identifierP <* Parser.string("IN").token) ~ expressionP ~ 
-		sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+	def forEachStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((stringTokenP("FOREACH") *> identifierP <* stringTokenP("IN")) ~ expressionP ~ 
+		sequenceStmtP(stmtRecP) <* stringTokenP("END"))
 		.map{case ((x,y),z) => ForEachStmt(x,y,z)}
-	}
 
-	def loopStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		(Parser.string("LOOP").token *> sequenceStmtP(stmtRecP) <* Parser.string("END").token)
+	def loopStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		(stringTokenP("LOOP") *> sequenceStmtP(stmtRecP) <* stringTokenP("END"))
 		.map(statement => LoopStmt(statement))
-	} 
 
-	def returnP: Parser[Statement] = {
-		(Parser.string("RETURN").token *> expressionP)
+	def returnP: Parser[Statement] =
+		(stringTokenP("RETURN") *> expressionP)
 		.map((expression) => ReturnStmt(expression))
-	}
 
-	def exitP: Parser[Statement] = {
-		(Parser.string("EXIT").token)
+	def exitP: Parser[Statement] =
+		(stringTokenP("EXIT"))
 		.map(_ => ExitStmt())
-	}
 
 	def labelP: Parser[Expression] =
 		decIntegerP | quoteStringP | qualifiedNameP.map(VarExpression.apply)
 
-	def caseAlternativeP(stmtRecP: Parser0[Option[Statement]]): Parser[CaseAlternative] = {
-		(
-		(labelP ~ (stringTokenP("..") *> labelP).? <* charTokenP(':')) ~ sequenceStmtP(stmtRecP)
-		)
+	def caseAlternativeP(stmtRecP: Parser0[Option[Statement]]): Parser[CaseAlternative] =
+		((labelP ~ (stringTokenP("..") *> labelP).? <* charTokenP(':')) ~ sequenceStmtP(stmtRecP))
 		.map {
 			case ((label, None), stmts) => SimpleCase(label, stmts)
 			case ((min, Some(max)), stmts) => RangeCase(min, max, stmts)
 		}
-	}
 
-	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] = {
-		(
-			(expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
-			(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~
-			(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).?)
-			<* stringTokenP("END")
-		)
+	def caseStmtP(stmtRecP: Parser0[Option[Statement]]): Parser[Statement] =
+		((expressionP.between(stringTokenP("CASE"), stringTokenP("OF"))) ~
+		(caseAlternativeP(stmtRecP).backtrack.repSep(charTokenP('|')) ~
+		(stringTokenP("ELSE") *> sequenceStmtP(stmtRecP)).?) <* stringTokenP("END"))
 		.map {
 			case (expr, (cases, stmt)) => CaseStmt(expr,cases.toList, stmt)
 		}
-	}
 
-	def statementP: Parser0[Option[Statement]] = {
+	def statementP: Parser0[Option[Statement]] = 
 		(caseStmtP(Parser.defer0(statementP)) | loopStmtP(Parser.defer0(statementP)) |
 		forEachStmtP(Parser.defer0(statementP)) | forStmtP(Parser.defer0(statementP)) |
 		repeatStmtP(Parser.defer0(statementP)) | whileStmtP(Parser.defer0(statementP)) | exitP |
 		returnP | ifStmtP(Parser.defer0(statementP)) | readShortIntStmtP | readCharStmtP |
 		readIntStmtP | readLongIntStmtP | readRealStmtP |readLongRealStmtP |
 		assignmentStmtP.backtrack | writeStmtP | procedureCallStmtP.backtrack).?
+
+	def userTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] =
+		arrayTypeP(oberonTypeRecP) | recordTypeP(oberonTypeRecP) | pointerTypeP(oberonTypeRecP)
+	
+	def pointerTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] =
+		(stringTokenP("POINTER") *> (stringTokenP("TO") *> oberonTypeRecP))
+		.map (x => PointerType(x))
+
+	def recordTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] =
+		(stringTokenP("RECORD") *> varDeclarationP(oberonTypeRecP).rep0 <* stringTokenP("END"))
+		.map(x => RecordType(x))
+
+	def arrayTypeP(oberonTypeRecP: Parser[Type]): Parser[Type] =
+		((stringTokenP("ARRAY") *> unsignedDecIntegerP.token <* stringTokenP("OF")) ~ oberonTypeRecP)
+		.map{case (IntValue(x),y) => ArrayType(x,y)}
+
+	def varDeclarationP(oberonTypeRecP: Parser[Type]): Parser[VariableDeclaration] = 
+		(identifierDefP ~ (stringTokenP(",") *> identifierDefP).rep0 ~ 
+		(stringTokenP(":") *> oberonTypeRecP <* stringTokenP(";"))).backtrack
+		.map { case ((x,y),z) => 
+				val ids = y.foldLeft(x) {
+					case (x1,x2) => x1+","+x2
+				} 
+				VariableDeclaration(ids,z)
+			}
+
+	def oberonTypeP: Parser[Type] =
+		userTypeP(Parser.defer(oberonTypeP)) | stringTokenP("INTEGER").map(_=> IntegerType) | 
+		stringTokenP("REAL").map(_ => RealType) | stringTokenP("CHAR").map(_ => CharacterType) | 
+		stringTokenP("BOOLEAN").map(_ => BooleanType) | stringTokenP("STRING").map(_ => StringType) | 
+		nullP.map(_ => NullType) | qualifiedNameP.map(name => ReferenceToUserDefinedType(name))
+
+	def formalsP = (formalArgP ~ (stringTokenP(",") *> formalArgP).rep0).?.betweenParen
+
+	def procedureP: Parser[Procedure] =
+		((stringTokenP("PROCEDURE") *> identifierDefP) ~ formalsP ~ 
+		((stringTokenP(":") *> oberonTypeP).? <* stringTokenP(";")) ~ 
+		(stringTokenP("CONST") *> constantP.rep0).? ~ (stringTokenP("VAR") *> varDeclarationP(oberonTypeP).rep0).? ~
+		(stringTokenP("BEGIN") *> sequenceStmtP(statementP) <* stringTokenP("END")) ~ identifierP)
+		.map{ case (((((((id,option1),tipo),option2),option3),stmt),endId)) => {
+				if(id != endId) 
+					throw new Exception(s"Procedure name ($id) doesn't match the end identifier ($endId)")
+				val args = option1 match {
+					case Some(head,tail) => (head :: tail)
+					case None => Nil
+				} 
+				val constantes = option2 match {
+					case Some(listConst) => listConst
+					case None => Nil
+				} 
+				val variaveis = option3 match {
+					case Some(listVar) => listVar
+					case None => Nil
+				}
+				Procedure(id,args.flatten,tipo,constantes,variaveis,stmt)
+			}
+		}
+	
+	def constantP: Parser[Constant] =
+		(identifierDefP ~ (stringTokenP("=") *> expressionP <* stringTokenP(";"))).backtrack
+		.map((x,y) => Constant(x,y))
+
+	def formalArgP: Parser[List[FormalArg]] = 
+		parameterByReferenceP | parameterByValueP
+
+	def parameterByReferenceP: Parser[List[FormalArg]] = 
+		(stringTokenP("VAR") *> qualifiedNameP ~ (stringTokenP(",") *> 
+		(stringTokenP("VAR") *> qualifiedNameP)).rep0 ~ (stringTokenP(":") *> oberonTypeP))
+		.map{ case ((x,y),z) => (x :: y).map{x => ParameterByReference(x, z)}
+		}
+
+	def parameterByValueP: Parser[List[FormalArg]] = 
+		(qualifiedNameP ~ (stringTokenP(",") *> qualifiedNameP).rep0 ~ (stringTokenP(":") *> oberonTypeP))
+		.map{ case ((x,y),z) => 
+			(x :: y).map{x => ParameterByValue(x, z)}
+		}
+	
+	def importP: Parser[(String, Option[String])] = identifierP ~ (stringTokenP(":=") *> identifierP ).?
+
+	def importListP: Parser[Set[String]] = 
+		(stringTokenP("IMPORT") *> importP ~ (stringTokenP(",") *> importP).rep0 <* stringTokenP(";"))
+		.map{ case (head,tail) => {
+				(head::tail).foldLeft(Set()) {
+					case (total,(head1,Some(head2))) => total.++(Set(head1+":="+head2))
+					case (total,(head1,None)) => total.++(Set(head1))
+				}
+			}
+		}
+	
+	// Ultima pergunta para o professor // LEMBRARRRRRRR //
+	// perguntar se o correto seria ser oberonType ou userType igual especificado em g4
+	def userTypeDeclarationP: Parser[UserDefinedType] = {
+		((identifierDefP <* stringTokenP("=")) ~ userTypeP(oberonTypeP))
+		.map((x,y) => UserDefinedType(x,y))
 	}
+
+	def oberonModuleP: Parser[OberonModule] = 
+		((stringTokenP("MODULE") *> identifierP <* stringTokenP(";")) ~ importListP.? ~
+		(stringTokenP("TYPE") *> userTypeDeclarationP.rep0).? ~ (stringTokenP("CONST") *> constantP.rep0).? ~ 
+		(stringTokenP("VAR") *> varDeclarationP(oberonTypeP).rep0).? ~ procedureP.rep0.? ~
+		(stringTokenP("BEGIN") *> sequenceStmtP(statementP) <* stringTokenP("END")).? ~ 
+		(stringTokenP("END") *> identifierP <* stringTokenP(".")))
+		.map { case (((((((id,option1),option2),option3),option4),option5),stmt),endId) => 
+			if(id != endId) 
+				throw new Exception(s"Module name ($id) doesn't match the end identifier ($endId)")
+			val setModules = option1 match {
+				case Some(set) => set
+				case None => Set()
+			}
+			val listUserType = option2 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listConst = option3 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listVarDeclaration = option4 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			val listProcedure = option5 match {
+				case Some(list) => list
+				case None => Nil 
+			}
+			OberonModule(id,setModules,listUserType,listConst,listVarDeclaration,listProcedure,stmt)
+		}
 }

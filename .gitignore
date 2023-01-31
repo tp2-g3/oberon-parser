@@ -2,3 +2,6 @@ target/
 project/
 .bsp/
 antlr.g4
+.vscode/
+.metals/
+.bloop/
