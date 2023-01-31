@@ -426,7 +426,7 @@ object OberonParser {
 					case Some(listVar) => listVar
 					case None => Nil
 				}
-				Procedure(id,args,tipo,constantes,variaveis,stmt)
+				Procedure(id,args.flatten,tipo,constantes,variaveis,stmt)
 			}
 		}
 	
@@ -434,26 +434,19 @@ object OberonParser {
 		(identifierDefP ~ (stringTokenP("=") *> expressionP <* stringTokenP(";"))).backtrack
 		.map((x,y) => Constant(x,y))
 
-	def formalArgP: Parser[FormalArg] = 
+	def formalArgP: Parser[List[FormalArg]] = 
 		parameterByReferenceP | parameterByValueP
 
-	def parameterByReferenceP: Parser[FormalArg] = 
+	def parameterByReferenceP: Parser[List[FormalArg]] = 
 		(stringTokenP("VAR") *> qualifiedNameP ~ (stringTokenP(",") *> 
 		(stringTokenP("VAR") *> qualifiedNameP)).rep0 ~ (stringTokenP(":") *> oberonTypeP))
-		.map{ case ((x,y),z) => 
-			val ids = y.foldLeft(x) {
-				case (x1,x2) => x1+","+x2
-			} 
-			ParameterByReference(ids,z)
+		.map{ case ((x,y),z) => (x :: y).map{x => ParameterByReference(x, z)}
 		}
 
-	def parameterByValueP: Parser[FormalArg] = 
+	def parameterByValueP: Parser[List[FormalArg]] = 
 		(qualifiedNameP ~ (stringTokenP(",") *> qualifiedNameP).rep0 ~ (stringTokenP(":") *> oberonTypeP))
 		.map{ case ((x,y),z) => 
-			val ids = y.foldLeft(x) {
-				case (x1,x2) => x1+","+x2
-			} 
-			ParameterByValue(ids,z)
+			(x :: y).map{x => ParameterByValue(x, z)}
 		}
 	
 	def importP: Parser[(String, Option[String])] = identifierP ~ (stringTokenP(":=") *> identifierP ).?
