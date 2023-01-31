@@ -179,6 +179,21 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("nullP test") {
+		val nullTest1 = nullP.parseString("NIL")
+		val nullTest2 = nullP.parseString("NIL ")
+
+		nullTest1 match {
+			case Right(str, value) => assert(value == NullValue && str == "")
+			case Left(_) => fail("Failed to parse null test 1")
+		}
+
+		nullTest2 match {
+			case Right(str, value) => assert(value == NullValue && str == "")
+			case Left(_) => fail("Failed to parse null test 2")
+		}
+	}
+
 	test("Statement Test Assignment"){
 		val test1 = statementP.parse("x.y.z := 3") 
 		val test2 = statementP.parse("z^ :=3")
