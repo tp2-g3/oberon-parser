@@ -227,6 +227,27 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("charP test") {
+		val charTest1 = charP.parseString("'a'")
+		val charTest2 = charP.parseString("'b'")
+		val charTest3 = charP.parseString("'z'")
+
+		charTest1 match {
+			case Right(str, value) => assert(value == CharValue('a'))
+			case Left(_) => fail("Failed to parse char test 1")
+		}
+
+		charTest2 match {
+			case Right(str, value) => assert(value == CharValue('b'))
+			case Left(_) => fail("Failed to parse char test 2")
+		}
+
+		charTest3 match {
+			case Right(str, value) => assert(value == CharValue('z'))
+			case Left(_) => fail("Failed to parse char test 3")
+		}
+	}
+
 	test("Statement Test Assignment"){
 		val test1 = statementP.parse("x.y.z := 3") 
 		val test2 = statementP.parse("z^ :=3")
