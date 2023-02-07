@@ -179,6 +179,39 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("charTokenP test") {
+		val charTokenTest1 = charTokenP('a').parseString("a")
+		val charTokenTest2 = charTokenP('b').parseString("b")
+		val charTokenTest3 = charTokenP('c').parseString("c")
+		val charTokenTest4 = charTokenP('a').parseString("b")
+		val charTokenTest5 = charTokenP('b').parseString("a")
+
+		charTokenTest1 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest1")
+		}
+
+		charTokenTest2 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest2")
+		}
+
+		charTokenTest3 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest3")
+		}
+
+		charTokenTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest4")
+		}
+
+		charTokenTest5 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest5")
+		}
+	}
+
 	test("Statement Test Assignment"){
 		val test1 = statementP.parse("x.y.z := 3") 
 		val test2 = statementP.parse("z^ :=3")
