@@ -203,6 +203,65 @@ class ParserTestSuite extends munit.FunSuite {
 		unsignedRealTest4 match {
 			case Right(str, value) => assert(value == RealValue(0.01) && str == "")
 			case Left(_) => fail("Failed to parse unsigned real test 4")
+
+	test("charTokenP test") {
+		val charTokenTest1 = charTokenP('a').parseString("a")
+		val charTokenTest2 = charTokenP('b').parseString("b")
+		val charTokenTest3 = charTokenP('c').parseString("c")
+		val charTokenTest4 = charTokenP('a').parseString("b")
+		val charTokenTest5 = charTokenP('b').parseString("a")
+
+		charTokenTest1 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest1")
+		}
+
+		charTokenTest2 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest2")
+		}
+
+		charTokenTest3 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest3")
+		}
+
+		charTokenTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest4")
+		}
+
+		charTokenTest5 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest5")
+		}
+	}
+
+	test("stringTokenP test") {
+		val stringTokenTest1 = stringTokenP("test").parseString("test")
+		val stringTokenTest2 = stringTokenP("test").parseString("test a")
+		val stringTokenTest3 = stringTokenP("test").parseString("anytest123")
+		val stringTokenTest4 = stringTokenP("test").parseString("notest")
+
+		stringTokenTest1 match {
+			case Right(str, _) => assert(str == "")
+			case Left(_) => fail("Failed to parse stringTokenTest1")
+		}
+
+		stringTokenTest2 match {
+			case Right(str, _) => assert(str == "a")
+			case Left(_) => fail("Failed to parse stringTokenTest2")
+		}
+
+		stringTokenTest3 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Failed to parse stringTokenTest3")
+		}
+
+		stringTokenTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Failed to parse stringTokenTest4")
+
 		}
 	}
 
