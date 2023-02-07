@@ -179,6 +179,20 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("signP test") {
+		val signTest1 = signP.parseString("+")
+		val signTest2 = signP.parseString("-")
+
+		signTest1 match {
+			case Right(str, value) => assert(value == UnaryPlusOperator)
+			case Left(_) => fail("Failed to parse sign test 1")
+		}
+
+		signTest2 match {
+			case Right(str, value) => assert(value == UnaryMinusOperator)
+			case Left(_) => fail("Failed to parse sign test 2")
+		}
+	}
 	test("unsignedDecIntegerP test") {
 		val unsignedDecIntegerTest1 = unsignedDecIntegerP.parseString("123")
 		val unsignedDecIntegerTest2 = unsignedDecIntegerP.parseString("456")
