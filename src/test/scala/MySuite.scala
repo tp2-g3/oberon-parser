@@ -179,6 +179,31 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("unsignedRealP test") {
+		val unsignedRealTest1 = unsignedRealP.parseString("1.0")
+		val unsignedRealTest2 = unsignedRealP.parseString("12345.678")
+		val unsignedRealTest3 = unsignedRealP.parseString("12345.0")
+		val unsignedRealTest4 = unsignedRealP.parseString("0.01")
+
+		unsignedRealTest1 match {
+			case Right(str, value) => assert(value == RealValue(1.0) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 1")
+		}
+
+		unsignedRealTest2 match {
+			case Right(str, value) => assert(value == RealValue(12345.678) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 2")
+		}
+
+		unsignedRealTest3 match {
+			case Right(str, value) => assert(value == RealValue(12345.0) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 3")
+		}
+
+		unsignedRealTest4 match {
+			case Right(str, value) => assert(value == RealValue(0.01) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 4")
+
 	test("charTokenP test") {
 		val charTokenTest1 = charTokenP('a').parseString("a")
 		val charTokenTest2 = charTokenP('b').parseString("b")
@@ -236,6 +261,7 @@ class ParserTestSuite extends munit.FunSuite {
 		stringTokenTest4 match {
 			case Left(_) => assert(true)
 			case Right(_) => fail("Failed to parse stringTokenTest4")
+
 		}
 	}
 
