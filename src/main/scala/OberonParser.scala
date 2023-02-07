@@ -68,7 +68,7 @@ object OberonParser {
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
 
-	private def signP: Parser[UnaryArithOperator] =
+	def signP: Parser[UnaryArithOperator] =
 		charTokenP('+').map(x => UnaryPlusOperator) | charTokenP('-').map(x => UnaryMinusOperator)
 
 	def realP: Parser[RealValue] =
