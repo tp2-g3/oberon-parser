@@ -1,4 +1,4 @@
-mport oberonParser.OberonParser.*
+import oberonParser.OberonParser.*
 import oberonParser.ParserSyntax.*
 import oberonAST.*
 
