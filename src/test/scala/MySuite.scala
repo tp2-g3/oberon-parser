@@ -203,6 +203,8 @@ class ParserTestSuite extends munit.FunSuite {
 		unsignedRealTest4 match {
 			case Right(str, value) => assert(value == RealValue(0.01) && str == "")
 			case Left(_) => fail("Failed to parse unsigned real test 4")
+		}
+	}
 
 	test("charTokenP test") {
 		val charTokenTest1 = charTokenP('a').parseString("a")
