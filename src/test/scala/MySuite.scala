@@ -179,6 +179,26 @@ class ParserTestSuite extends munit.FunSuite {
 		}
 	}
 
+	test("unsignedDecIntegerP test") {
+		val unsignedDecIntegerTest1 = unsignedDecIntegerP.parseString("123")
+		val unsignedDecIntegerTest2 = unsignedDecIntegerP.parseString("456")
+		val unsignedDecIntegerTest3 = unsignedDecIntegerP.parseString("789")
+
+		unsignedDecIntegerTest1 match {
+			case Right(str, value) => assert(value == IntValue(123) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 1")
+		}
+
+		unsignedDecIntegerTest2 match {
+			case Right(str, value) => assert(value == IntValue(456) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 2")
+		}
+
+		unsignedDecIntegerTest3 match {
+			case Right(str, value) => assert(value == IntValue(789) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 3")
+		}
+	}
 	test("decIntegerP test") {
 		val decIntegerTest1 = decIntegerP.parseString("+ 5")
 		val decIntegerTest2 = decIntegerP.parseString("- 2")
