@@ -199,7 +199,7 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse dec integer test 3")
 		}
 	}
-	
+  
 	test("unsignedRealP test") {
 		val unsignedRealTest1 = unsignedRealP.parseString("1.0")
 		val unsignedRealTest2 = unsignedRealP.parseString("12345.678")
