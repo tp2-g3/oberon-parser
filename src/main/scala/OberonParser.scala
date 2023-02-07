@@ -41,7 +41,7 @@ object OberonParser {
 	import ParserSyntax.*
 
 	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
-	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
+	def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
 
 
 	val identifierP: Parser[String] = 
@@ -68,7 +68,7 @@ object OberonParser {
 		.map((intPart, fracPart) => intPart.toDouble + fracPart)
 		.map(RealValue.apply)
 
-	private def signP: Parser[UnaryArithOperator] =
+	def signP: Parser[UnaryArithOperator] =
 		charTokenP('+').map(x => UnaryPlusOperator) | charTokenP('-').map(x => UnaryMinusOperator)
 
 	def realP: Parser[RealValue] =

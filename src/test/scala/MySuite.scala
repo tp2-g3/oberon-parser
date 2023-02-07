@@ -1,4 +1,4 @@
-import oberonParser.OberonParser.*
+mport oberonParser.OberonParser.*
 import oberonParser.ParserSyntax.*
 import oberonAST.*
 
@@ -178,7 +178,7 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 6")
 		}
 	}
-
+  
 	test("nullP test") {
 		val nullTest1 = nullP.parseString("NIL")
 		val nullTest2 = nullP.parseString("NIL ")
@@ -245,6 +245,147 @@ class ParserTestSuite extends munit.FunSuite {
 		charTest3 match {
 			case Right(str, value) => assert(value == CharValue('z'))
 			case Left(_) => fail("Failed to parse char test 3")
+		}
+	}
+	test("signP test") {
+		val signTest1 = signP.parseString("+")
+		val signTest2 = signP.parseString("-")
+
+		signTest1 match {
+			case Right(str, value) => assert(value == UnaryPlusOperator)
+			case Left(_) => fail("Failed to parse sign test 1")
+		}
+
+		signTest2 match {
+			case Right(str, value) => assert(value == UnaryMinusOperator)
+			case Left(_) => fail("Failed to parse sign test 2")
+		}
+	}
+	test("unsignedDecIntegerP test") {
+		val unsignedDecIntegerTest1 = unsignedDecIntegerP.parseString("123")
+		val unsignedDecIntegerTest2 = unsignedDecIntegerP.parseString("456")
+		val unsignedDecIntegerTest3 = unsignedDecIntegerP.parseString("789")
+
+		unsignedDecIntegerTest1 match {
+			case Right(str, value) => assert(value == IntValue(123) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 1")
+		}
+
+		unsignedDecIntegerTest2 match {
+			case Right(str, value) => assert(value == IntValue(456) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 2")
+		}
+
+		unsignedDecIntegerTest3 match {
+			case Right(str, value) => assert(value == IntValue(789) && str == "")
+			case Left(_) => fail("Failed to parse unsigned decimal integer test 3")
+		}
+	}
+	test("decIntegerP test") {
+		val decIntegerTest1 = decIntegerP.parseString("+ 5")
+		val decIntegerTest2 = decIntegerP.parseString("- 2")
+		val decIntegerTest3 = decIntegerP.parseString("3")
+
+		decIntegerTest1 match {
+			case Right(str, value) => assert(value == IntValue(5) && str == "")
+			case Left(_) => fail("Failed to parse dec integer test 1")
+		}
+
+		decIntegerTest2 match {
+			case Right(str, value) => assert(value == IntValue(-2) && str == "")
+			case Left(_) => fail("Failed to parse dec integer test 2")
+		}
+
+		decIntegerTest3 match {
+			case Right(str, value) => assert(value == IntValue(3) && str == "")
+			case Left(_) => fail("Failed to parse dec integer test 3")
+		}
+	}
+  
+	test("unsignedRealP test") {
+		val unsignedRealTest1 = unsignedRealP.parseString("1.0")
+		val unsignedRealTest2 = unsignedRealP.parseString("12345.678")
+		val unsignedRealTest3 = unsignedRealP.parseString("12345.0")
+		val unsignedRealTest4 = unsignedRealP.parseString("0.01")
+
+		unsignedRealTest1 match {
+			case Right(str, value) => assert(value == RealValue(1.0) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 1")
+		}
+
+		unsignedRealTest2 match {
+			case Right(str, value) => assert(value == RealValue(12345.678) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 2")
+		}
+
+		unsignedRealTest3 match {
+			case Right(str, value) => assert(value == RealValue(12345.0) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 3")
+		}
+
+		unsignedRealTest4 match {
+			case Right(str, value) => assert(value == RealValue(0.01) && str == "")
+			case Left(_) => fail("Failed to parse unsigned real test 4")
+		}
+	}
+
+	test("charTokenP test") {
+		val charTokenTest1 = charTokenP('a').parseString("a")
+		val charTokenTest2 = charTokenP('b').parseString("b")
+		val charTokenTest3 = charTokenP('c').parseString("c")
+		val charTokenTest4 = charTokenP('a').parseString("b")
+		val charTokenTest5 = charTokenP('b').parseString("a")
+
+		charTokenTest1 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest1")
+		}
+
+		charTokenTest2 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest2")
+		}
+
+		charTokenTest3 match {
+			case Right(_) => assert(true)
+			case Left(_) => fail("Failed to parse charTokenTest3")
+		}
+
+		charTokenTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest4")
+		}
+
+		charTokenTest5 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Should fail to parse charTokenTest5")
+		}
+	}
+
+	test("stringTokenP test") {
+		val stringTokenTest1 = stringTokenP("test").parseString("test")
+		val stringTokenTest2 = stringTokenP("test").parseString("test a")
+		val stringTokenTest3 = stringTokenP("test").parseString("anytest123")
+		val stringTokenTest4 = stringTokenP("test").parseString("notest")
+
+		stringTokenTest1 match {
+			case Right(str, _) => assert(str == "")
+			case Left(_) => fail("Failed to parse stringTokenTest1")
+		}
+
+		stringTokenTest2 match {
+			case Right(str, _) => assert(str == "a")
+			case Left(_) => fail("Failed to parse stringTokenTest2")
+		}
+
+		stringTokenTest3 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Failed to parse stringTokenTest3")
+		}
+
+		stringTokenTest4 match {
+			case Left(_) => assert(true)
+			case Right(_) => fail("Failed to parse stringTokenTest4")
 		}
 	}
 
