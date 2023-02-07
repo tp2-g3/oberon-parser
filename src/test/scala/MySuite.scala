@@ -1,4 +1,4 @@
-import oberonParser.OberonParser.*
+mport oberonParser.OberonParser.*
 import oberonParser.ParserSyntax.*
 import oberonAST.*
 
@@ -178,7 +178,75 @@ class ParserTestSuite extends munit.FunSuite {
 			case Left(_) => fail("Failed to parse add test 6")
 		}
 	}
+  
+	test("nullP test") {
+		val nullTest1 = nullP.parseString("NIL")
+		val nullTest2 = nullP.parseString("NIL ")
 
+		nullTest1 match {
+			case Right(str, value) => assert(value == NullValue && str == "")
+			case Left(_) => fail("Failed to parse null test 1")
+		}
+
+		nullTest2 match {
+			case Right(str, value) => assert(value == NullValue && str == "")
+			case Left(_) => fail("Failed to parse null test 2")
+		}
+	}
+
+	test("realP test") {
+		val realTest1 = realP.parseString("+3.14")
+		val realTest2 = realP.parseString("-2.718")
+		val realTest3 = realP.parseString("0.0")
+		val realTest4 = realP.parseString("1.234")
+		val realTest5 = realP.parseString("-0.5")
+
+		realTest1 match {
+			case Right(str, value) => assert(value == RealValue(3.14) && str == "")
+			case Left(_) => fail("Failed to parse real test 1")
+		}
+
+		realTest2 match {
+			case Right(str, value) => assert(value == RealValue(-2.718) && str == "")
+			case Left(_) => fail("Failed to parse real test 2")
+		}
+
+		realTest3 match {
+			case Right(str, value) => assert(value == RealValue(0.0) && str == "")
+			case Left(_) => fail("Failed to parse real test 3")
+		}
+
+		realTest4 match {
+			case Right(str, value) => assert(value == RealValue(1.234) && str == "")
+			case Left(_) => fail("Failed to parse real test 4")
+		}
+
+		realTest5 match {
+			case Right(str, value) => assert(value == RealValue(-0.5) && str == "")
+			case Left(_) => fail("Failed to parse real test 5")
+		}
+	}
+
+	test("charP test") {
+		val charTest1 = charP.parseString("'a'")
+		val charTest2 = charP.parseString("'b'")
+		val charTest3 = charP.parseString("'z'")
+
+		charTest1 match {
+			case Right(str, value) => assert(value == CharValue('a'))
+			case Left(_) => fail("Failed to parse char test 1")
+		}
+
+		charTest2 match {
+			case Right(str, value) => assert(value == CharValue('b'))
+			case Left(_) => fail("Failed to parse char test 2")
+		}
+
+		charTest3 match {
+			case Right(str, value) => assert(value == CharValue('z'))
+			case Left(_) => fail("Failed to parse char test 3")
+		}
+	}
 	test("signP test") {
 		val signTest1 = signP.parseString("+")
 		val signTest2 = signP.parseString("-")
@@ -318,7 +386,6 @@ class ParserTestSuite extends munit.FunSuite {
 		stringTokenTest4 match {
 			case Left(_) => assert(true)
 			case Right(_) => fail("Failed to parse stringTokenTest4")
-
 		}
 	}
 
