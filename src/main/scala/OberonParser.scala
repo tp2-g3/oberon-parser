@@ -41,7 +41,7 @@ object OberonParser {
 	import ParserSyntax.*
 
 	def charTokenP(c: Char): Parser[Unit] = Parser.char(c).token
-	private def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
+	def stringTokenP(str: String): Parser[Unit] = Parser.string(str).token
 
 
 	val identifierP: Parser[String] = 
